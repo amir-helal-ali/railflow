@@ -44,6 +44,14 @@ import type {
   EdgeConfig,
   AggregatedLog,
   LogStream,
+  SecurityFinding,
+  SecurityScan,
+  FirewallRule,
+  PerformanceMetric,
+  ProjectPerformance,
+  MetricDefinition,
+  SavedDashboard,
+  Integration,
 } from "./types";
 
 export const mockUser: User = {
@@ -1545,4 +1553,120 @@ export const mockLogStreams: LogStream[] = [
   { id: "ls_2", name: "API Gateway traffic", containers: ["c_api_1"], filter: "path:/api/*", level: "all", enabled: true, lastMessageAt: minAgo(0.2) },
   { id: "ls_3", name: "ML inference alerts", containers: ["c_ml_1"], filter: "level:warn OR level:error", level: "warn", enabled: true, lastMessageAt: hourAgo(1) },
   { id: "ls_4", name: "All deployments", containers: [], filter: "message:deployment", level: "all", enabled: false, lastMessageAt: hourAgo(3) },
+];
+
+// ---------- Security Center ----------
+export const mockSecurityFindings: SecurityFinding[] = [
+  { id: "sf_1", severity: "critical", category: "exposed-secret", title: "AWS access key exposed in env vars", description: "An AWS access key (AKIA••••) was found in plaintext in the web-platform-prod container's environment variables. Rotate this key immediately.", resource: { type: "container", id: "c_web_1", name: "web-platform-prod" }, detectedAt: hourAgo(2), status: "open", recommendation: "1. Rotate the AWS key in IAM\n2. Move secrets to encrypted storage\n3. Re-deploy with Railflow secret management", cve: undefined, cvssScore: 9.8 },
+  { id: "sf_2", severity: "high", category: "vulnerability", title: "Log4j 2.14.1 — CVE-2021-44228 (Log4Shell)", description: "Critical RCE vulnerability in Log4j allows unauthenticated remote code execution. Affects the legacy-mysql container.", resource: { type: "container", id: "c_mysql", name: "legacy-mysql" }, detectedAt: dayAgo(1), status: "open", recommendation: "Upgrade Log4j to 2.17.1+ or apply the vendor patch immediately.", cve: "CVE-2021-44228", cvssScore: 10.0 },
+  { id: "sf_3", severity: "high", category: "outdated-dependency", title: "openssl 1.1.1k has 3 known CVEs", description: "The OpenSSL version in api-gateway-prod has known vulnerabilities including CVE-2021-3711 (SM2 buffer overflow).", resource: { type: "container", id: "c_api_1", name: "api-gateway-prod" }, detectedAt: dayAgo(3), status: "acknowledged", recommendation: "Rebuild the container with openssl 1.1.1v or later.", cve: "CVE-2021-3711", cvssScore: 7.5 },
+  { id: "sf_4", severity: "medium", category: "misconfiguration", title: "Container running as root", description: "The ml-inference-prod container is running as root user. This violates least-privilege principle.", resource: { type: "container", id: "c_ml_1", name: "ml-inference-prod" }, detectedAt: dayAgo(5), status: "open", recommendation: "Add USER directive to Dockerfile or set user in run config." },
+  { id: "sf_5", severity: "medium", category: "open-port", title: "PostgreSQL port exposed externally", description: "Port 5432 on postgres-prod is accessible from 0.0.0.0. Should be restricted to internal network only.", resource: { type: "container", id: "c_pg", name: "postgres-prod" }, detectedAt: dayAgo(7), status: "acknowledged", recommendation: "Bind to 127.0.0.1 or internal network only." },
+  { id: "sf_6", severity: "low", category: "weak-auth", title: "2FA not enabled for 2 team members", description: "Layla Ibrahim and Mariam Saleh have not enabled two-factor authentication.", resource: { type: "user", id: "u_4", name: "Layla Ibrahim" }, detectedAt: dayAgo(10), status: "open", recommendation: "Require 2FA for all team members with developer role or higher." },
+  { id: "sf_7", severity: "low", category: "outdated-dependency", title: "lodash 4.17.20 — minor vulnerabilities", description: "Prototype pollution vulnerability in lodash. Update to 4.17.21+.", resource: { type: "project", id: "p_web", name: "Web Platform" }, detectedAt: dayAgo(2), status: "resolved", recommendation: "Run `npm update lodash` and redeploy." },
+  { id: "sf_8", severity: "medium", category: "misconfiguration", title: "No resource limits on workers-prod", description: "Container workers-prod has no CPU/memory limits set, may consume host resources.", resource: { type: "container", id: "c_worker_1", name: "workers-prod" }, detectedAt: dayAgo(4), status: "ignored", recommendation: "Set --memory=1g --cpus=1 in container config." },
+];
+
+export const mockSecurityScans: SecurityScan[] = [
+  { id: "scan_1", type: "container", target: "All running containers (8)", startedAt: hourAgo(2), finishedAt: hourAgo(2), status: "completed", findingsCount: { critical: 1, high: 2, medium: 2, low: 3 } },
+  { id: "scan_2", type: "dependency", target: "Web Platform (npm audit)", startedAt: hourAgo(3), finishedAt: hourAgo(3), status: "completed", findingsCount: { critical: 0, high: 0, medium: 1, low: 1 } },
+  { id: "scan_3", type: "code", target: "API Gateway (cargo audit)", startedAt: hourAgo(4), finishedAt: hourAgo(4), status: "completed", findingsCount: { critical: 0, high: 0, medium: 0, low: 0 } },
+  { id: "scan_4", type: "network", target: "Full network scan", startedAt: minAgo(5), status: "running", findingsCount: { critical: 0, high: 0, medium: 0, low: 0 } },
+];
+
+export const mockFirewallRules: FirewallRule[] = [
+  { id: "fw_1", action: "deny", protocol: "all", source: "0.0.0.0/0", destination: "postgres-prod", port: "5432", description: "Block external PostgreSQL access", enabled: true, priority: 100 },
+  { id: "fw_2", action: "deny", protocol: "all", source: "0.0.0.0/0", destination: "redis-cache", port: "6379", description: "Block external Redis access", enabled: true, priority: 100 },
+  { id: "fw_3", action: "allow", protocol: "tcp", source: "172.20.0.0/16", destination: "postgres-prod", port: "5432", description: "Allow internal network to PostgreSQL", enabled: true, priority: 200 },
+  { id: "fw_4", action: "allow", protocol: "tcp", source: "172.20.0.0/16", destination: "redis-cache", port: "6379", description: "Allow internal network to Redis", enabled: true, priority: 200 },
+  { id: "fw_5", action: "allow", protocol: "tcp", source: "0.0.0.0/0", destination: "edge-proxy", port: "80,443", description: "Allow HTTP/HTTPS to edge proxy", enabled: true, priority: 300 },
+  { id: "fw_6", action: "deny", protocol: "tcp", source: "197.43.x.x", destination: "*", port: "*", description: "Block known malicious IP", enabled: true, priority: 50 },
+  { id: "fw_7", action: "allow", protocol: "icmp", source: "0.0.0.0/0", destination: "*", port: "*", description: "Allow ping", enabled: false, priority: 400 },
+];
+
+// ---------- Performance Analytics ----------
+export function generatePerformanceHistory(days: number = 30): PerformanceMetric[] {
+  const out: PerformanceMetric[] = [];
+  const now = Date.now();
+  for (let i = days; i >= 0; i--) {
+    out.push({
+      timestamp: new Date(now - i * 86_400_000).toISOString(),
+      loadTimeMs: 800 + Math.random() * 400,
+      fcpMs: 600 + Math.random() * 300,
+      lcpMs: 1200 + Math.random() * 600,
+      cls: Math.random() * 0.15,
+      fidMs: 50 + Math.random() * 80,
+      ttfbMs: 120 + Math.random() * 80,
+      inpMs: 100 + Math.random() * 100,
+    });
+  }
+  return out;
+}
+
+export const mockProjectPerformance: ProjectPerformance[] = [
+  { projectId: "p_web", projectName: "Web Platform", url: "https://railflow.io", scores: { performance: 94, accessibility: 96, bestPractices: 100, seo: 92 }, coreWebVitals: { lcp: 1.2, fid: 0.05, cls: 0.04, inp: 0.12 }, trends: { lcp: -8, fid: -2, cls: -15 }, history: generatePerformanceHistory() },
+  { projectId: "p_api", projectName: "API Gateway", url: "https://api.railflow.io/health", scores: { performance: 99, accessibility: 100, bestPractices: 100, seo: 100 }, coreWebVitals: { lcp: 0.18, fid: 0.01, cls: 0, inp: 0.02 }, trends: { lcp: 0, fid: 0, cls: 0 }, history: generatePerformanceHistory() },
+  { projectId: "p_docs", projectName: "Documentation", url: "https://docs.railflow.io", scores: { performance: 98, accessibility: 89, bestPractices: 100, seo: 95 }, coreWebVitals: { lcp: 0.8, fid: 0.03, cls: 0.01, inp: 0.08 }, trends: { lcp: -5, fid: 0, cls: 0 }, history: generatePerformanceHistory() },
+  { projectId: "p_ml", projectName: "ML Inference", url: "https://infer.railflow.io", scores: { performance: 67, accessibility: 71, bestPractices: 86, seo: 60 }, coreWebVitals: { lcp: 3.4, fid: 0.18, cls: 0.12, inp: 0.45 }, trends: { lcp: 12, fid: 8, cls: 5 }, history: generatePerformanceHistory() },
+  { projectId: "p_mobile", projectName: "Mobile API (staging)", url: "https://staging-m.railflow.io", scores: { performance: 0, accessibility: 0, bestPractices: 0, seo: 0 }, coreWebVitals: { lcp: 0, fid: 0, cls: 0, inp: 0 }, trends: { lcp: 0, fid: 0, cls: 0 }, history: [] },
+];
+
+// ---------- Metrics Explorer ----------
+export const mockMetricDefinitions: MetricDefinition[] = [
+  { id: "m_1", name: "container_cpu_usage_percent", type: "gauge", unit: "%", description: "CPU usage percentage per container", labels: ["container", "image", "project"], source: "container" },
+  { id: "m_2", name: "container_memory_usage_bytes", type: "gauge", unit: "bytes", description: "Memory usage in bytes", labels: ["container", "image"], source: "container" },
+  { id: "m_3", name: "container_network_receive_bytes_total", type: "counter", unit: "bytes", description: "Total bytes received", labels: ["container", "interface"], source: "container" },
+  { id: "m_4", name: "container_network_transmit_bytes_total", type: "counter", unit: "bytes", description: "Total bytes transmitted", labels: ["container", "interface"], source: "container" },
+  { id: "m_5", name: "host_cpu_load_avg", type: "gauge", unit: "", description: "Host CPU load average (1/5/15 min)", labels: ["host"], source: "host" },
+  { id: "m_6", name: "host_memory_available_bytes", type: "gauge", unit: "bytes", description: "Available memory", labels: ["host"], source: "host" },
+  { id: "m_7", name: "host_disk_used_percent", type: "gauge", unit: "%", description: "Disk usage per mountpoint", labels: ["host", "device", "mountpoint"], source: "host" },
+  { id: "m_8", name: "http_requests_total", type: "counter", unit: "", description: "Total HTTP requests", labels: ["method", "path", "status"], source: "application" },
+  { id: "m_9", name: "http_request_duration_seconds", type: "histogram", unit: "seconds", description: "HTTP request duration", labels: ["method", "path"], source: "application" },
+  { id: "m_10", name: "http_requests_in_flight", type: "gauge", unit: "", description: "Current in-flight HTTP requests", labels: [], source: "application" },
+  { id: "m_11", name: "db_connections_active", type: "gauge", unit: "", description: "Active database connections", labels: ["database", "engine"], source: "database" },
+  { id: "m_12", name: "db_queries_per_second", type: "gauge", unit: "qps", description: "Database queries per second", labels: ["database"], source: "database" },
+  { id: "m_13", name: "db_query_duration_seconds", type: "histogram", unit: "seconds", description: "Database query duration", labels: ["database", "operation"], source: "database" },
+  { id: "m_14", name: "network_bytes_per_second", type: "gauge", unit: "B/s", description: "Network throughput", labels: ["interface", "direction"], source: "network" },
+  { id: "m_15", name: "network_packets_dropped_total", type: "counter", unit: "", description: "Total dropped packets", labels: ["interface"], source: "network" },
+  { id: "m_16", name: "deployment_duration_seconds", type: "histogram", unit: "seconds", description: "Deployment pipeline duration", labels: ["project", "strategy"], source: "application" },
+  { id: "m_17", name: "build_queue_depth", type: "gauge", unit: "", description: "Number of builds in queue", labels: [], source: "application" },
+  { id: "m_18", name: "container_restart_count", type: "counter", unit: "", description: "Total container restarts", labels: ["container"], source: "container" },
+];
+
+export const mockSavedDashboards: SavedDashboard[] = [
+  { id: "d_1", name: "Infrastructure Overview", description: "CPU, memory, disk, and network for all hosts", panels: [
+    { id: "p_1", metric: "host_cpu_load_avg", title: "CPU Load", type: "line", timeRange: "1h", refresh: "10s" },
+    { id: "p_2", metric: "host_memory_available_bytes", title: "Memory", type: "area", timeRange: "1h", refresh: "10s" },
+    { id: "p_3", metric: "host_disk_used_percent", title: "Disk Usage", type: "gauge", timeRange: "5m", refresh: "30s" },
+    { id: "p_4", metric: "network_bytes_per_second", title: "Network", type: "line", timeRange: "1h", refresh: "10s" },
+  ], createdAt: dayAgo(45), updatedAt: dayAgo(2) },
+  { id: "d_2", name: "Application Performance", description: "HTTP metrics, latency, error rates", panels: [
+    { id: "p_1", metric: "http_requests_total", title: "Request Rate", type: "line", timeRange: "6h", refresh: "30s" },
+    { id: "p_2", metric: "http_request_duration_seconds", title: "p95 Latency", type: "line", timeRange: "6h", refresh: "30s" },
+    { id: "p_3", metric: "http_requests_in_flight", title: "In-Flight", type: "stat", timeRange: "5m", refresh: "5s" },
+  ], createdAt: dayAgo(30), updatedAt: dayAgo(1) },
+  { id: "d_3", name: "Database Health", description: "Connections, QPS, query latency", panels: [
+    { id: "p_1", metric: "db_connections_active", title: "Active Connections", type: "line", timeRange: "1h", refresh: "10s" },
+    { id: "p_2", metric: "db_queries_per_second", title: "QPS", type: "area", timeRange: "1h", refresh: "10s" },
+    { id: "p_3", metric: "db_query_duration_seconds", title: "Slow Queries", type: "bar", timeRange: "24h", refresh: "1m" },
+  ], createdAt: dayAgo(20), updatedAt: dayAgo(3) },
+];
+
+// ---------- Integrations ----------
+export const mockIntegrations: Integration[] = [
+  { id: "int_github", name: "GitHub", category: "ci-cd", icon: "🐙", description: "Source control, auto-deploy from push, PR previews", installed: true, configRequired: false, authType: "oauth", connectedAt: dayAgo(245), features: ["Auto-deploy on push", "PR preview environments", "Commit status checks", "Webhook management"], popularity: 98, documentation: "https://docs.railflow.io/github" },
+  { id: "int_slack", name: "Slack", category: "communication", icon: "💬", description: "Send deployment notifications and alerts to Slack channels", installed: true, configRequired: false, authType: "webhook", connectedAt: dayAgo(89), features: ["Deployment notifications", "Critical alerts", "Daily summaries", "@mentions for failures"], popularity: 94, documentation: "https://docs.railflow.io/slack" },
+  { id: "int_grafana", name: "Grafana", category: "monitoring", icon: "📊", description: "Visualize metrics with Grafana dashboards", installed: true, configRequired: false, authType: "api-key", connectedAt: dayAgo(45), features: ["Pre-built dashboards", "Custom panels", "Alerting", "Annotations"], popularity: 91, documentation: "https://docs.railflow.io/grafana" },
+  { id: "int_sentry", name: "Sentry", category: "monitoring", icon: "🛡️", description: "Error tracking and performance monitoring", installed: true, configRequired: false, authType: "api-key", connectedAt: dayAgo(60), features: ["Error tracking", "Release tracking", "Performance monitoring", "Source maps"], popularity: 89, documentation: "https://docs.railflow.io/sentry" },
+  { id: "int_datadog", name: "Datadog", category: "monitoring", icon: "🐕", description: "Full-stack observability with APM and logs", installed: false, configRequired: true, authType: "api-key", features: ["APM", "Log management", "Custom metrics", "Synthetic monitoring"], popularity: 87, documentation: "https://docs.railflow.io/datadog" },
+  { id: "int_prometheus", name: "Prometheus", category: "monitoring", icon: "🔥", description: "Open-source metrics collection and alerting", installed: false, configRequired: true, authType: "none", features: ["PromQL queries", "Alert manager", "Service discovery", "Long-term storage"], popularity: 85, documentation: "https://docs.railflow.io/prometheus" },
+  { id: "int_vercel", name: "Vercel Analytics", category: "analytics", icon: "▲", description: "Web vitals and audience analytics", installed: false, configRequired: true, authType: "oauth", features: ["Core Web Vitals", "Audience insights", "Speed insights", "Real user monitoring"], popularity: 78, documentation: "https://docs.railflow.io/vercel" },
+  { id: "int_stripe", name: "Stripe", category: "payments", icon: "💳", description: "Payment processing and subscription management", installed: false, configRequired: true, authType: "api-key", features: ["Subscriptions", "One-time payments", "Webhooks", "Customer portal"], popularity: 92, documentation: "https://docs.railflow.io/stripe" },
+  { id: "int_auth0", name: "Auth0", category: "auth", icon: "🔐", description: "Identity provider with SSO and social login", installed: false, configRequired: true, authType: "oauth", features: ["SSO", "Social login", "MFA", "Universal login"], popularity: 84, documentation: "https://docs.railflow.io/auth0" },
+  { id: "int_clerk", name: "Clerk", category: "auth", icon: "👤", description: "User management and authentication", installed: false, configRequired: true, authType: "api-key", features: ["Pre-built UI", "Multi-session", "Organizations", "Webhooks"], popularity: 76, documentation: "https://docs.railflow.io/clerk" },
+  { id: "int_s3", name: "AWS S3", category: "storage", icon: "🪣", description: "Object storage for backups and assets", installed: true, configRequired: false, authType: "api-key", connectedAt: dayAgo(120), features: ["Automated backups", "Static asset hosting", "Lifecycle policies", "Versioning"], popularity: 95, documentation: "https://docs.railflow.io/s3" },
+  { id: "int_cloudflare", name: "Cloudflare", category: "security", icon: "☁️", description: "CDN, WAF, and DDoS protection", installed: false, configRequired: true, authType: "api-key", features: ["CDN", "WAF rules", "DDoS protection", "Rate limiting"], popularity: 90, documentation: "https://docs.railflow.io/cloudflare" },
+  { id: "int_discord", name: "Discord", category: "communication", icon: "🎮", description: "Send notifications to Discord channels", installed: false, configRequired: false, authType: "webhook", features: ["Deployment notifications", "Alerts", "Rich embeds"], popularity: 72, documentation: "https://docs.railflow.io/discord" },
+  { id: "int_pagerduty", name: "PagerDuty", category: "communication", icon: "📟", description: "On-call alerting and incident management", installed: false, configRequired: true, authType: "api-key", features: ["On-call schedules", "Escalation policies", "Incident timelines", "Postmortems"], popularity: 81, documentation: "https://docs.railflow.io/pagerduty" },
+  { id: "int_posthog", name: "PostHog", category: "analytics", icon: "🦔", description: "Product analytics, feature flags, session replay", installed: false, configRequired: true, authType: "api-key", features: ["Event tracking", "Feature flags", "Session replay", "Funnels"], popularity: 74, documentation: "https://docs.railflow.io/posthog" },
 ];

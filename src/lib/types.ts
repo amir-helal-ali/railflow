@@ -790,3 +790,105 @@ export interface LogStream {
   enabled: boolean;
   lastMessageAt?: string;
 }
+
+// ----- Security Center -----
+export interface SecurityFinding {
+  id: string;
+  severity: "critical" | "high" | "medium" | "low";
+  category: "vulnerability" | "misconfiguration" | "exposed-secret" | "outdated-dependency" | "weak-auth" | "open-port";
+  title: string;
+  description: string;
+  resource: { type: string; id: string; name: string };
+  detectedAt: string;
+  status: "open" | "acknowledged" | "resolved" | "ignored";
+  recommendation: string;
+  cve?: string;
+  cvssScore?: number;
+}
+
+export interface SecurityScan {
+  id: string;
+  type: "container" | "dependency" | "code" | "network";
+  target: string;
+  startedAt: string;
+  finishedAt?: string;
+  status: "running" | "completed" | "failed";
+  findingsCount: { critical: number; high: number; medium: number; low: number };
+}
+
+export interface FirewallRule {
+  id: string;
+  action: "allow" | "deny";
+  protocol: "tcp" | "udp" | "icmp" | "all";
+  source: string;
+  destination: string;
+  port: string;
+  description: string;
+  enabled: boolean;
+  priority: number;
+}
+
+// ----- Performance Analytics -----
+export interface PerformanceMetric {
+  timestamp: string;
+  loadTimeMs: number;
+  fcpMs: number;     // First Contentful Paint
+  lcpMs: number;     // Largest Contentful Paint
+  cls: number;       // Cumulative Layout Shift
+  fidMs: number;     // First Input Delay
+  ttfbMs: number;    // Time to First Byte
+  inpMs: number;     // Interaction to Next Paint
+}
+
+export interface ProjectPerformance {
+  projectId: string;
+  projectName: string;
+  url: string;
+  scores: { performance: number; accessibility: number; bestPractices: number; seo: number };
+  coreWebVitals: { lcp: number; fid: number; cls: number; inp: number };
+  trends: { lcp: number; fid: number; cls: number };
+  history: PerformanceMetric[];
+}
+
+// ----- Metrics Explorer (Prometheus-style) -----
+export interface MetricDefinition {
+  id: string;
+  name: string;
+  type: "counter" | "gauge" | "histogram" | "summary";
+  unit: string;
+  description: string;
+  labels: string[];
+  source: "container" | "host" | "application" | "database" | "network";
+}
+
+export interface SavedDashboard {
+  id: string;
+  name: string;
+  description: string;
+  panels: Array<{
+    id: string;
+    metric: string;
+    title: string;
+    type: "line" | "area" | "bar" | "gauge" | "stat";
+    timeRange: string;
+    refresh: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ----- Integrations -----
+export interface Integration {
+  id: string;
+  name: string;
+  category: "monitoring" | "ci-cd" | "communication" | "security" | "analytics" | "storage" | "auth" | "payments";
+  icon: string;
+  description: string;
+  installed: boolean;
+  configRequired: boolean;
+  authType: "oauth" | "api-key" | "webhook" | "none";
+  connectedAt?: string;
+  features: string[];
+  popularity: number;
+  documentation?: string;
+}

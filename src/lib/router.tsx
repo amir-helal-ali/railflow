@@ -35,6 +35,10 @@ export type View =
   | { name: "marketplace" }
   | { name: "regions" }
   | { name: "logsAgg" }
+  | { name: "security" }
+  | { name: "performance" }
+  | { name: "metricsExplorer" }
+  | { name: "integrations" }
   | { name: "settings"; tab?: string }
   | { name: "login" };
 
