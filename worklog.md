@@ -155,3 +155,35 @@ Stage Summary:
 - All interactive features verified working: terminal exec, API playground, alert acknowledgment, help article reading.
 - ESLint clean. No runtime errors. RTL Arabic working across all new pages.
 - The platform now matches enterprise-grade PaaS offerings with features beyond Railway: interactive terminal, API playground, multi-environment management, deploy strategies (rolling/blue-green/canary), real-time alerts with notification rules, and full documentation system.
+
+---
+Task ID: 4
+Agent: Main (Super Z)
+Task: Continue building — add advanced enterprise features: CI/CD Pipeline Builder, Webhooks viewer, Cost/Billing, API Health Monitoring, Audit Search.
+
+Work Log:
+- Added 8 new types to src/lib/types.ts: Pipeline, PipelineStage, PipelineStageType, WebhookEndpoint, WebhookDelivery, CostBreakdown, Invoice, CostAlert, ApiHealthCheck, ApiMetricPoint, AuditQuery.
+- Added 7 new mock datasets: 5 CI/CD pipelines (each with 4-7 stages + last run + stats), 4 webhook endpoints + 8 deliveries (with request/response bodies), 7 cost breakdown categories, 6 invoices, 3 cost alerts, 5 API health checks with 30-day history, 4 saved audit queries + generateApiMetrics() function.
+- Added ~150 new translation keys per language for: pipelines (40 keys), webhooks (25 keys), cost (35 keys), apiHealth (25 keys), auditSearch (20 keys).
+- Extended router with 5 new view types: pipelines, webhooks, cost, apiHealth, auditSearch.
+- Built PipelinesView.tsx (~350 lines): visual pipeline builder with stage flow visualization (drag handles, type-colored icons, arrows between stages), trigger config (events/branches/schedule), expandable stage details (command/image/timeout/condition/onFailure), pipeline stats (totalRuns/successRate/avgDuration), last-run status with spinner, per-stage enable toggles, save button.
+- Built WebhooksView.tsx (~280 lines): webhook endpoints list with collapsible details (URL/events/SSL/deliveries stats), delivery history with filters (all/delivered/failed/retry/pending), delivery detail panel showing request body + response body + headers, redeliver button, test webhook action.
+- Built CostView.tsx (~280 lines): 3 top cards (current/last/projected), 30-day cost trend area chart, cost breakdown table with category icons + usage progress bars + trend indicators, invoices list with status badges + PDF download, budget alerts with progress bars + trigger status, payment method card.
+- Built ApiHealthView.tsx (~290 lines): 4 summary cards (total/up/down/avg uptime), health checks list with status icons + uptime %, detail panel with endpoint info + regions, traffic metrics (requests/errors/error rate/p95), p95+p99 line chart, 30-day history bar visualization (green=up/red=down).
+- Built AuditSearchView.tsx (~280 lines): left filter sidebar (actors with avatars, categories pills, date range, save query dialog, export CSV/JSON), saved queries section, right results panel with search bar, audit entries with actor avatars + category badges + IP + timestamp.
+- Updated Sidebar.tsx: 5 new nav items (Pipelines with badge, Webhooks, Cost, API Health with down-services badge, Audit Search) across 3 groups. Now 24 nav items total.
+- Updated AppShell.tsx: imported and wired all 5 new views.
+- Added Rust backend:
+  - routes/pipelines.rs: full CRUD + run + stages management (15 endpoints). Each pipeline run spawns async pipeline_runner that executes stages sequentially with condition checks + on_failure handling (stop/continue/retry).
+  - services/pipeline_runner.rs: stage execution with status tracking (pending/running/success/failed), error capture, retry logic.
+  - routes/webhooks_out.rs: full CRUD + test + deliveries list + redeliver (10 endpoints).
+  - services/webhook_deliverer.rs: HTTP POST delivery with HMAC-SHA256 signature, 3 attempts with exponential backoff (1s/4s/16s), full request/response capture.
+- Added SQL migration 20260722000004: 5 new tables (pipelines, pipeline_stages, pipeline_runs, pipeline_stage_runs, webhooks, webhook_deliveries) with proper indexes, constraints, and triggers.
+- Verified with Agent Browser: all 5 new pages load correctly with no errors. Took screenshots: 23-pipelines, 24-webhooks, 25-cost, 26-api-health, 27-audit-search. All RTL Arabic working.
+
+Stage Summary:
+- Frontend now: 26 view files (~10,500 lines total), 24 sidebar nav items, ~650 translation keys per language.
+- Backend now: 27 Rust source files (~4,000 lines), 14 routers, 5 SQL migrations with 19 tables total.
+- New interactive features: pipeline stage expansion, webhook delivery details, cost trend chart, API health sparklines, audit filter combinations.
+- ESLint clean. No runtime errors. RTL Arabic working across all new pages.
+- The platform now matches enterprise PaaS offerings (Vercel + Render + Datadog combined): visual CI/CD builder, outgoing webhooks with retries, cost analytics, API health monitoring across regions, advanced audit search with saved queries.

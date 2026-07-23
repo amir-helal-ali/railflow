@@ -26,6 +26,11 @@ import { EnvironmentsView } from "@/components/views/EnvironmentsView";
 import { StrategiesView } from "@/components/views/StrategiesView";
 import { AlertsView } from "@/components/views/AlertsView";
 import { HelpView } from "@/components/views/HelpView";
+import { PipelinesView } from "@/components/views/PipelinesView";
+import { WebhooksView } from "@/components/views/WebhooksView";
+import { CostView } from "@/components/views/CostView";
+import { ApiHealthView } from "@/components/views/ApiHealthView";
+import { AuditSearchView } from "@/components/views/AuditSearchView";
 import { useLocalStorage } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -124,6 +129,11 @@ export function AppShell() {
               {view.name === "strategies" && <StrategiesView />}
               {view.name === "alerts" && <AlertsView />}
               {view.name === "help" && <HelpView />}
+              {view.name === "pipelines" && <PipelinesView />}
+              {view.name === "webhooks" && <WebhooksView />}
+              {view.name === "cost" && <CostView />}
+              {view.name === "apiHealth" && <ApiHealthView />}
+              {view.name === "auditSearch" && <AuditSearchView />}
               {view.name === "settings" && <SettingsView tab={view.tab} />}
             </ViewBoundary>
           </div>

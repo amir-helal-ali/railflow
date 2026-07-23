@@ -30,6 +30,15 @@ import type {
   Alert,
   NotificationRule,
   HelpTopic,
+  Pipeline,
+  WebhookEndpoint,
+  WebhookDelivery,
+  CostBreakdown,
+  Invoice,
+  CostAlert,
+  ApiHealthCheck,
+  ApiMetricPoint,
+  AuditQuery,
 } from "./types";
 
 export const mockUser: User = {
@@ -1208,4 +1217,229 @@ export const mockHelpTopics: HelpTopic[] = [
   { id: "h_6", title: "Using the API", category: "api", icon: "🔌", description: "Automate Railflow with our REST API and WebSocket streams.", readTimeMin: 8, lastUpdated: dayAgo(1), content: "## Authentication\n\nAll API requests require a Bearer token:\n```\nAuthorization: Bearer <token>\n```\n\nGet a token by logging in via `POST /api/auth/login`, or create a long-lived API key in **Settings → API Keys**.\n\n## WebSocket streams\n\nReal-time updates via WebSocket:\n- `/api/ws/stats/:container_id` — container stats (1Hz)\n- `/api/ws/events` — Docker daemon events\n- `/api/ws/logs/:container_id` — live log tail\n- `/api/ws/server?interval_ms=2000` — host metrics\n\n## Rate limits\n\n- 100 requests/minute per IP (configurable)\n- 10 concurrent WebSocket connections per user\n- API keys inherit the user's rate limit\n\nUse the **API Playground** to test endpoints interactively." },
   { id: "h_7", title: "Billing & plans", category: "billing", icon: "💳", description: "Plans, limits, overages, and how to upgrade.", readTimeMin: 3, lastUpdated: dayAgo(10), content: "## Plans\n\n| Plan | Price | Projects | Containers | Bandwidth |\n|------|-------|----------|------------|-----------|\n| Hobby | $0/mo | 3 | 5 | 50 GB |\n| Pro | $49/mo | 15 | 25 | 500 GB |\n| Scale | $199/mo | 25 | 50 | 2 TB |\n| Enterprise | Custom | Unlimited | Unlimited | Custom |\n\n## Overages\n\n- Bandwidth: $0.02/GB over plan\n- Storage: $0.10/GB/mo over plan\n- Managed databases: billed per-hour based on plan tier\n\n## Upgrading\n\nGo to **Settings → Billing** to upgrade. Changes are prorated and take effect immediately." },
   { id: "h_8", title: "Team management & RBAC", category: "security", icon: "👥", description: "Invite team members and assign roles with granular permissions.", readTimeMin: 4, lastUpdated: dayAgo(2), content: "## Roles\n\n- **Owner** — full access including billing, team management, and deletion\n- **Admin** — manage projects, deployments, containers, databases (no billing/team)\n- **Developer** — deploy, view logs, manage environment variables\n- **Viewer** — read-only access to all resources\n\n## Inviting members\n\n1. Go to **Team → Invite Member**\n2. Enter their email\n3. Pick a role\n4. They get an email invitation valid for 7 days\n\n## Permissions matrix\n\n| Action | Owner | Admin | Developer | Viewer |\n|--------|-------|-------|-----------|--------|\n| View projects | ✓ | ✓ | ✓ | ✓ |\n| Deploy | ✓ | ✓ | ✓ | ✗ |\n| Manage env vars | ✓ | ✓ | ✓ | ✗ |\n| Create/delete projects | ✓ | ✓ | ✗ | ✗ |\n| Manage databases | ✓ | ✓ | ✗ | ✗ |\n| Invite members | ✓ | ✓ | ✗ | ✗ |\n| Billing | ✓ | ✗ | ✗ | ✗ |\n| Delete account | ✓ | ✗ | ✗ | ✗ |" },
+];
+
+// ---------- CI/CD Pipelines ----------
+export const mockPipelines: Pipeline[] = [
+  {
+    id: "pipe_web",
+    name: "Web Platform CI/CD",
+    projectId: "p_web",
+    projectName: "Web Platform",
+    enabled: true,
+    trigger: { events: ["push", "pull_request"], branches: ["main", "develop"] },
+    stages: [
+      { id: "s1", type: "trigger", name: "Trigger", enabled: true, onFailure: "stop" },
+      { id: "s2", type: "lint", name: "ESLint + Prettier", enabled: true, command: "bun run lint", image: "node:22-alpine", timeoutSec: 60, onFailure: "stop" },
+      { id: "s3", type: "test", name: "Unit Tests", enabled: true, command: "bun test", image: "node:22-alpine", timeoutSec: 180, onFailure: "stop" },
+      { id: "s4", type: "build", name: "Build", enabled: true, command: "bun run build", image: "node:22-alpine", timeoutSec: 300, onFailure: "stop" },
+      { id: "s5", type: "security-scan", name: "Dependency Audit", enabled: true, command: "bun audit", image: "node:22-alpine", timeoutSec: 90, onFailure: "continue" },
+      { id: "s6", type: "deploy", name: "Deploy to Production", enabled: true, condition: "branch == 'main'", command: "railflow deploy --env production", onFailure: "stop" },
+      { id: "s7", type: "notify", name: "Notify Slack", enabled: true, command: "curl -X POST $SLACK_WEBHOOK", onFailure: "continue" },
+    ],
+    lastRun: { id: "run_42", status: "success", startedAt: minAgo(14), durationMs: 187_000, triggeredBy: "GitHub Webhook" },
+    stats: { totalRuns: 412, successRate: 98.3, avgDurationMs: 192_000, last24h: 6 },
+    createdAt: dayAgo(245),
+    updatedAt: minAgo(14),
+  },
+  {
+    id: "pipe_api",
+    name: "API Gateway CI/CD",
+    projectId: "p_api",
+    projectName: "API Gateway",
+    enabled: true,
+    trigger: { events: ["push", "tag"], branches: ["main"] },
+    stages: [
+      { id: "s1", type: "trigger", name: "Trigger", enabled: true, onFailure: "stop" },
+      { id: "s2", type: "lint", name: "cargo clippy", enabled: true, command: "cargo clippy -- -D warnings", image: "rust:1.82", timeoutSec: 120, onFailure: "stop" },
+      { id: "s3", type: "test", name: "cargo test", enabled: true, command: "cargo test", image: "rust:1.82", timeoutSec: 300, onFailure: "stop" },
+      { id: "s4", type: "build", name: "cargo build --release", enabled: true, command: "cargo build --release", image: "rust:1.82", timeoutSec: 600, onFailure: "stop" },
+      { id: "s5", type: "security-scan", name: "cargo audit", enabled: true, command: "cargo audit", image: "rust:1.82", timeoutSec: 60, onFailure: "continue" },
+      { id: "s6", type: "deploy", name: "Deploy", enabled: true, condition: "branch == 'main'", command: "railflow deploy --env production", onFailure: "stop" },
+    ],
+    lastRun: { id: "run_87", status: "success", startedAt: hourAgo(3), durationMs: 145_000, triggeredBy: "GitHub Webhook" },
+    stats: { totalRuns: 287, successRate: 99.6, avgDurationMs: 152_000, last24h: 2 },
+    createdAt: dayAgo(312),
+    updatedAt: hourAgo(3),
+  },
+  {
+    id: "pipe_ml",
+    name: "ML Inference CI/CD",
+    projectId: "p_ml",
+    projectName: "ML Inference",
+    enabled: true,
+    trigger: { events: ["push", "schedule"], branches: ["main"], schedule: "0 2 * * *" },
+    stages: [
+      { id: "s1", type: "trigger", name: "Trigger", enabled: true, onFailure: "stop" },
+      { id: "s2", type: "test", name: "pytest", enabled: true, command: "pytest tests/", image: "python:3.12", timeoutSec: 240, onFailure: "stop" },
+      { id: "s3", type: "build", name: "Docker build", enabled: true, command: "docker build -t ml-inference .", image: "docker:24", timeoutSec: 900, onFailure: "stop" },
+      { id: "s4", type: "deploy", name: "Deploy", enabled: true, condition: "branch == 'main'", command: "railflow deploy --env production", onFailure: "stop" },
+      { id: "s5", type: "notify", name: "Notify Team", enabled: false, onFailure: "continue" },
+    ],
+    lastRun: { id: "run_12", status: "running", startedAt: minAgo(3), durationMs: 0, triggeredBy: "Ahmed Hassan" },
+    stats: { totalRuns: 87, successRate: 94.2, avgDurationMs: 312_000, last24h: 4 },
+    createdAt: dayAgo(64),
+    updatedAt: minAgo(3),
+  },
+  {
+    id: "pipe_worker",
+    name: "Background Workers CI/CD",
+    projectId: "p_worker",
+    projectName: "Background Workers",
+    enabled: true,
+    trigger: { events: ["push"], branches: ["main"] },
+    stages: [
+      { id: "s1", type: "trigger", name: "Trigger", enabled: true, onFailure: "stop" },
+      { id: "s2", type: "test", name: "go test", enabled: true, command: "go test ./...", image: "golang:1.22", timeoutSec: 120, onFailure: "stop" },
+      { id: "s3", type: "build", name: "go build", enabled: true, command: "go build -o worker ./cmd/worker", image: "golang:1.22", timeoutSec: 90, onFailure: "stop" },
+      { id: "s4", type: "deploy", name: "Deploy", enabled: true, command: "railflow deploy --env production", onFailure: "stop" },
+    ],
+    lastRun: { id: "run_34", status: "success", startedAt: hourAgo(11), durationMs: 64_000, triggeredBy: "GitHub Webhook" },
+    stats: { totalRuns: 198, successRate: 97.5, avgDurationMs: 68_000, last24h: 3 },
+    createdAt: dayAgo(188),
+    updatedAt: hourAgo(11),
+  },
+  {
+    id: "pipe_mobile",
+    name: "Mobile API CI/CD",
+    projectId: "p_mobile",
+    projectName: "Mobile API",
+    enabled: false,
+    trigger: { events: ["push", "pull_request"], branches: ["develop"] },
+    stages: [
+      { id: "s1", type: "trigger", name: "Trigger", enabled: true, onFailure: "stop" },
+      { id: "s2", type: "lint", name: "eslint", enabled: true, command: "npm run lint", image: "node:22", onFailure: "continue" },
+      { id: "s3", type: "test", name: "jest", enabled: true, command: "npm test", image: "node:22", onFailure: "stop" },
+      { id: "s4", type: "build", name: "tsc", enabled: true, command: "tsc", onFailure: "stop" },
+    ],
+    lastRun: { id: "run_8", status: "failed", startedAt: hourAgo(8), durationMs: 92_000, triggeredBy: "Layla Ibrahim" },
+    stats: { totalRuns: 233, successRate: 92.1, avgDurationMs: 76_000, last24h: 2 },
+    createdAt: dayAgo(98),
+    updatedAt: hourAgo(8),
+  },
+];
+
+// ---------- Webhook Endpoints & Deliveries ----------
+export const mockWebhooks: WebhookEndpoint[] = [
+  {
+    id: "wh_1",
+    name: "Slack #deploys",
+    url: "https://hooks.slack.com/services/T0/B0/xxx",
+    events: ["deployment.success", "deployment.failed"],
+    secret: "whsec_••••••••",
+    enabled: true,
+    sslVerification: true,
+    deliveries: { total: 1247, success: 1245, failed: 2, last24h: 8 },
+    createdAt: dayAgo(89),
+    lastDeliveryAt: minAgo(14),
+  },
+  {
+    id: "wh_2",
+    name: "Discord #alerts",
+    url: "https://discord.com/api/webhooks/xxx/yyy",
+    events: ["alert.critical", "container.unhealthy"],
+    secret: "whsec_••••••••",
+    enabled: true,
+    sslVerification: true,
+    deliveries: { total: 87, success: 87, failed: 0, last24h: 1 },
+    createdAt: dayAgo(120),
+    lastDeliveryAt: hourAgo(8),
+  },
+  {
+    id: "wh_3",
+    name: "Internal Analytics",
+    url: "https://analytics.internal.railflow.io/webhooks/railflow",
+    events: ["deployment.success", "project.created", "user.joined"],
+    secret: "whsec_••••••••",
+    enabled: true,
+    sslVerification: true,
+    deliveries: { total: 4234, success: 4231, failed: 3, last24h: 12 },
+    createdAt: dayAgo(245),
+    lastDeliveryAt: minAgo(3),
+  },
+  {
+    id: "wh_4",
+    name: "Zapier Integration",
+    url: "https://hooks.zapier.com/hooks/catch/xxx/yyy",
+    events: ["deployment.success"],
+    secret: "",
+    enabled: false,
+    sslVerification: true,
+    deliveries: { total: 156, success: 156, failed: 0, last24h: 0 },
+    createdAt: dayAgo(45),
+    lastDeliveryAt: dayAgo(7),
+  },
+];
+
+export const mockWebhookDeliveries: WebhookDelivery[] = [
+  { id: "wd_1", webhookId: "wh_1", webhookName: "Slack #deploys", event: "deployment.success", status: "delivered", statusCode: 200, attempt: 1, maxAttempts: 3, requestHeaders: { "Content-Type": "application/json", "X-Railflow-Event": "deployment.success", "X-Railflow-Signature": "sha256=abc123" }, requestBody: `{"event":"deployment.success","project":"Web Platform","commit":"a3f5c2e","url":"https://railflow.io"}`, responseBody: "OK", durationMs: 247, deliveredAt: minAgo(14) },
+  { id: "wd_2", webhookId: "wh_3", webhookName: "Internal Analytics", event: "deployment.success", status: "delivered", statusCode: 200, attempt: 1, maxAttempts: 3, requestHeaders: { "Content-Type": "application/json" }, requestBody: `{"event":"deployment.success","project":"Web Platform"}`, responseBody: `{"received":true}`, durationMs: 18, deliveredAt: minAgo(14) },
+  { id: "wd_3", webhookId: "wh_2", webhookName: "Discord #alerts", event: "alert.critical", status: "failed", statusCode: 500, attempt: 3, maxAttempts: 3, requestHeaders: { "Content-Type": "application/json" }, requestBody: `{"event":"alert.critical","title":"Container unhealthy"}`, responseBody: `{"error":"Internal server error"}`, durationMs: 5024, deliveredAt: hourAgo(8), nextRetryAt: hourAgo(7) },
+  { id: "wd_4", webhookId: "wh_1", webhookName: "Slack #deploys", event: "deployment.failed", status: "delivered", statusCode: 200, attempt: 1, maxAttempts: 3, requestHeaders: { "Content-Type": "application/json" }, requestBody: `{"event":"deployment.failed","project":"Mobile API","error":"Build failed"}`, responseBody: "OK", durationMs: 312, deliveredAt: hourAgo(8) },
+  { id: "wd_5", webhookId: "wh_3", webhookName: "Internal Analytics", event: "deployment.success", status: "delivered", statusCode: 200, attempt: 1, maxAttempts: 3, requestHeaders: { "Content-Type": "application/json" }, requestBody: `{"event":"deployment.success","project":"API Gateway"}`, responseBody: `{"received":true}`, durationMs: 22, deliveredAt: hourAgo(3) },
+  { id: "wd_6", webhookId: "wh_2", webhookName: "Discord #alerts", event: "alert.critical", status: "retrying", statusCode: 0, attempt: 2, maxAttempts: 3, requestHeaders: { "Content-Type": "application/json" }, requestBody: `{"event":"alert.critical"}`, responseBody: "", durationMs: 30000, deliveredAt: minAgo(2), nextRetryAt: minAgo(-2) },
+  { id: "wd_7", webhookId: "wh_1", webhookName: "Slack #deploys", event: "deployment.success", status: "delivered", statusCode: 200, attempt: 1, maxAttempts: 3, requestHeaders: { "Content-Type": "application/json" }, requestBody: `{"event":"deployment.success","project":"Background Workers"}`, responseBody: "OK", durationMs: 189, deliveredAt: hourAgo(11) },
+  { id: "wd_8", webhookId: "wh_3", webhookName: "Internal Analytics", event: "user.joined", status: "delivered", statusCode: 200, attempt: 1, maxAttempts: 3, requestHeaders: { "Content-Type": "application/json" }, requestBody: `{"event":"user.joined","user":"Yusuf Ali"}`, responseBody: `{"received":true}`, durationMs: 14, deliveredAt: dayAgo(1) },
+];
+
+// ---------- Cost / Billing ----------
+export const mockCostBreakdown: CostBreakdown[] = [
+  { category: "compute", label: "Compute (containers)", cost: 142.50, unit: "vCPU-hours", usage: 712, limit: 1500, trend: 12.4 },
+  { category: "database", label: "Managed databases", cost: 89.00, unit: "instances", usage: 5, limit: 10, trend: 0 },
+  { category: "storage", label: "Storage (volumes)", cost: 23.40, unit: "GB-month", usage: 234, limit: 500, trend: 8.2 },
+  { category: "bandwidth", label: "Bandwidth", cost: 18.20, unit: "GB", usage: 892, limit: 2000, trend: -3.1 },
+  { category: "backup", label: "Backups (S3)", cost: 4.80, unit: "GB-month", usage: 48, trend: 1.2 },
+  { category: "ssl", label: "SSL certificates", cost: 0, unit: "certs", usage: 7, trend: 0 },
+  { category: "support", label: "Priority support", cost: 49.00, unit: "month", usage: 1, trend: 0 },
+];
+
+export const mockInvoices: Invoice[] = [
+  { id: "inv_2026_07", number: "RF-2026-0007", period: { start: "2026-07-01", end: "2026-07-31" }, amount: 326.90, currency: "USD", status: "pending", method: "Visa ending 4242", issuedAt: dayAgo(2) },
+  { id: "inv_2026_06", number: "RF-2026-0006", period: { start: "2026-06-01", end: "2026-06-30" }, amount: 312.40, currency: "USD", status: "paid", method: "Visa ending 4242", issuedAt: dayAgo(32), pdfUrl: "#" },
+  { id: "inv_2026_05", number: "RF-2026-0005", period: { start: "2026-05-01", end: "2026-05-31" }, amount: 287.10, currency: "USD", status: "paid", method: "Visa ending 4242", issuedAt: dayAgo(62), pdfUrl: "#" },
+  { id: "inv_2026_04", number: "RF-2026-0004", period: { start: "2026-04-01", end: "2026-04-30" }, amount: 254.80, currency: "USD", status: "paid", method: "Visa ending 4242", issuedAt: dayAgo(92), pdfUrl: "#" },
+  { id: "inv_2026_03", number: "RF-2026-0003", period: { start: "2026-03-01", end: "2026-03-31" }, amount: 234.20, currency: "USD", status: "paid", method: "Visa ending 4242", issuedAt: dayAgo(122), pdfUrl: "#" },
+  { id: "inv_2026_02", number: "RF-2026-0002", period: { start: "2026-02-01", end: "2026-02-28" }, amount: 218.50, currency: "USD", status: "paid", method: "Visa ending 4242", issuedAt: dayAgo(152), pdfUrl: "#" },
+];
+
+export const mockCostAlerts: CostAlert[] = [
+  { id: "ca_1", threshold: 300, current: 326.90, period: "monthly", enabled: true, lastTriggered: dayAgo(2) },
+  { id: "ca_2", threshold: 50, current: 18.20, period: "daily", enabled: true },
+  { id: "ca_3", threshold: 100, current: 0, period: "daily", enabled: false },
+];
+
+// ---------- API Health Checks ----------
+export const mockApiHealthChecks: ApiHealthCheck[] = [
+  { id: "hc_1", name: "Web Platform", url: "https://railflow.io/api/health", method: "GET", expectedStatus: 200, intervalSec: 30, timeoutSec: 5, regions: ["fra1", "ny1", "sin1"], enabled: true, status: "up", uptime30d: 99.97, responseTimeMs: 42, lastCheck: minAgo(0.2), history: Array.from({ length: 30 }, (_, i) => ({ timestamp: dayAgo(i), status: "up" as const, responseTimeMs: 35 + Math.floor(Math.random() * 20) })) },
+  { id: "hc_2", name: "API Gateway", url: "https://api.railflow.io/health", method: "GET", expectedStatus: 200, intervalSec: 30, timeoutSec: 5, regions: ["fra1", "ny1"], enabled: true, status: "up", uptime30d: 100, responseTimeMs: 18, lastCheck: minAgo(0.1), lastIncident: dayAgo(45), history: Array.from({ length: 30 }, (_, i) => ({ timestamp: dayAgo(i), status: "up" as const, responseTimeMs: 12 + Math.floor(Math.random() * 15) })) },
+  { id: "hc_3", name: "ML Inference", url: "https://infer.railflow.io/health", method: "GET", expectedStatus: 200, intervalSec: 60, timeoutSec: 10, regions: ["fra1"], enabled: true, status: "degraded", uptime30d: 94.2, responseTimeMs: 1247, lastCheck: minAgo(0.5), lastIncident: hourAgo(2), history: Array.from({ length: 30 }, (_, i) => ({ timestamp: dayAgo(i), status: i === 0 ? "down" as const : "up" as const, responseTimeMs: 800 + Math.floor(Math.random() * 600) })) },
+  { id: "hc_4", name: "Documentation", url: "https://docs.railflow.io/", method: "HEAD", expectedStatus: 200, intervalSec: 300, timeoutSec: 5, regions: ["fra1"], enabled: true, status: "up", uptime30d: 100, responseTimeMs: 28, lastCheck: minAgo(3), history: Array.from({ length: 30 }, (_, i) => ({ timestamp: dayAgo(i), status: "up" as const, responseTimeMs: 20 + Math.floor(Math.random() * 15) })) },
+  { id: "hc_5", name: "Mobile API (staging)", url: "https://staging-m.railflow.io/health", method: "GET", expectedStatus: 200, intervalSec: 60, timeoutSec: 5, regions: ["fra1"], enabled: true, status: "down", uptime30d: 78.5, responseTimeMs: 0, lastCheck: minAgo(0.4), lastIncident: hourAgo(8), history: Array.from({ length: 30 }, (_, i) => ({ timestamp: dayAgo(i), status: i < 1 ? "down" as const : "up" as const, responseTimeMs: 0 })) },
+];
+
+export function generateApiMetrics(hours: number = 24): ApiMetricPoint[] {
+  const points: ApiMetricPoint[] = [];
+  const now = Date.now();
+  for (let i = hours; i >= 0; i--) {
+    const ts = new Date(now - i * 3_600_000).toISOString();
+    const reqs = Math.floor(800 + Math.random() * 600 + Math.sin(i / 4) * 200);
+    const errs = Math.floor(reqs * (Math.random() * 0.02));
+    points.push({
+      timestamp: ts,
+      requests: reqs,
+      errors: errs,
+      avgResponseMs: 35 + Math.random() * 25,
+      p95ResponseMs: 80 + Math.random() * 40,
+      p99ResponseMs: 180 + Math.random() * 80,
+    });
+  }
+  return points;
+}
+
+// ---------- Saved Audit Queries ----------
+export const mockAuditQueries: AuditQuery[] = [
+  { id: "aq_1", name: "Failed deploys this week", filters: { categories: ["deployment"], actions: ["deployment failed"], dateFrom: dayAgo(7) }, savedAt: dayAgo(14) },
+  { id: "aq_2", name: "Admin actions by Omar", filters: { actors: ["Omar Khaled"], categories: ["project", "container", "database"] }, savedAt: dayAgo(30) },
+  { id: "aq_3", name: "Logins from Egypt", filters: { categories: ["auth"], ipAddresses: ["156.21x.x.x", "197.43.x.x"] }, savedAt: dayAgo(45) },
+  { id: "aq_4", name: "All 2FA changes", filters: { categories: ["auth", "settings"], actions: ["enabled 2FA", "disabled 2FA"] }, savedAt: dayAgo(60) },
 ];

@@ -27,6 +27,11 @@ export type View =
   | { name: "strategies" }
   | { name: "alerts" }
   | { name: "help" }
+  | { name: "pipelines" }
+  | { name: "webhooks" }
+  | { name: "cost" }
+  | { name: "apiHealth" }
+  | { name: "auditSearch" }
   | { name: "settings"; tab?: string }
   | { name: "login" };
 

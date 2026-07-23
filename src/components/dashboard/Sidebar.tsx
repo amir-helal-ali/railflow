@@ -24,11 +24,16 @@ import {
   Layers,
   Bell,
   GitBranch,
+  Workflow,
+  Webhook,
+  DollarSign,
+  HeartPulse,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
 import { useRouter, type View } from "@/lib/router";
-import { mockProjects, mockDatabases, mockContainers, mockAlerts } from "@/lib/mock-data";
+import { mockProjects, mockDatabases, mockContainers, mockAlerts, mockPipelines, mockApiHealthChecks } from "@/lib/mock-data";
 
 type NavItem = {
   icon: React.ElementType;
@@ -47,6 +52,7 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle?
   const { view, navigate } = useRouter();
 
   const activeAlerts = mockAlerts.filter((a) => !a.resolved && !a.acknowledged).length;
+  const downServices = mockApiHealthChecks.filter((c) => c.status === "down").length;
 
   const groups: NavGroup[] = [
     {
@@ -56,8 +62,10 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle?
         { icon: FolderGit2, labelKey: "nav.projects", view: { name: "projects" }, badge: mockProjects.length },
         { icon: Rocket, labelKey: "nav.deployments", view: { name: "deployments" } },
         { icon: Layers, labelKey: "environments.title", view: { name: "environments" } },
+        { icon: Workflow, labelKey: "pipelines.title", view: { name: "pipelines" }, badge: mockPipelines.length },
         { icon: Bell, labelKey: "alerts.title", view: { name: "alerts" }, badge: activeAlerts },
         { icon: Activity, labelKey: "nav.activity", view: { name: "activity" } },
+        { icon: Search, labelKey: "auditSearch.title", view: { name: "auditSearch" } },
       ],
     },
     {
@@ -66,18 +74,21 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle?
         { icon: Boxes, labelKey: "nav.containers", view: { name: "containers" }, badge: mockContainers.filter(c => c.status === "running").length },
         { icon: TerminalSquare, labelKey: "terminal.title", view: { name: "terminal" } },
         { icon: Server, labelKey: "nav.server", view: { name: "server" } },
+        { icon: HeartPulse, labelKey: "apiHealth.title", view: { name: "apiHealth" }, badge: downServices || undefined },
         { icon: Database, labelKey: "nav.databases", view: { name: "databases" }, badge: mockDatabases.length },
         { icon: HardDrive, labelKey: "nav.volumes", view: { name: "volumes" } },
         { icon: Network, labelKey: "nav.networks", view: { name: "networks" } },
         { icon: Archive, labelKey: "backups.title", view: { name: "backups" } },
         { icon: ShieldCheck, labelKey: "certificates.title", view: { name: "certificates" } },
         { icon: GitBranch, labelKey: "strategies.title", view: { name: "strategies" } },
+        { icon: Webhook, labelKey: "webhooks.title", view: { name: "webhooks" } },
       ],
     },
     {
       titleKey: "nav.group.account",
       items: [
         { icon: Code2, labelKey: "playground.title", view: { name: "playground" } },
+        { icon: DollarSign, labelKey: "cost.title", view: { name: "cost" } },
         { icon: BookOpen, labelKey: "help.title", view: { name: "help" } },
         { icon: Users, labelKey: "nav.team", view: { name: "team" } },
         { icon: Settings, labelKey: "nav.settings", view: { name: "settings" } },

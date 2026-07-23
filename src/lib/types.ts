@@ -543,3 +543,169 @@ export interface HelpTopic {
   lastUpdated: string;
   content: string;
 }
+
+// ----- CI/CD Pipeline Builder -----
+export type PipelineStageType =
+  | "trigger"
+  | "build"
+  | "test"
+  | "lint"
+  | "security-scan"
+  | "deploy"
+  | "notify"
+  | "custom";
+
+export interface PipelineStage {
+  id: string;
+  type: PipelineStageType;
+  name: string;
+  enabled: boolean;
+  command?: string;
+  image?: string;
+  env?: Record<string, string>;
+  condition?: string; // e.g. "branch == 'main'"
+  timeoutSec?: number;
+  onFailure: "stop" | "continue" | "retry";
+  retryCount?: number;
+}
+
+export interface Pipeline {
+  id: string;
+  name: string;
+  projectId: string;
+  projectName: string;
+  enabled: boolean;
+  trigger: {
+    events: Array<"push" | "pull_request" | "tag" | "schedule" | "manual">;
+    branches: string[];
+    schedule?: string; // cron
+  };
+  stages: PipelineStage[];
+  lastRun?: {
+    id: string;
+    status: "success" | "failed" | "running" | "cancelled";
+    startedAt: string;
+    durationMs: number;
+    triggeredBy: string;
+  };
+  stats: {
+    totalRuns: number;
+    successRate: number;
+    avgDurationMs: number;
+    last24h: number;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ----- Webhooks -----
+export interface WebhookDelivery {
+  id: string;
+  webhookId: string;
+  webhookName: string;
+  event: string;
+  status: "delivered" | "failed" | "pending" | "retrying";
+  statusCode: number;
+  attempt: number;
+  maxAttempts: number;
+  requestHeaders: Record<string, string>;
+  requestBody: string;
+  responseBody: string;
+  durationMs: number;
+  deliveredAt: string;
+  nextRetryAt?: string;
+}
+
+export interface WebhookEndpoint {
+  id: string;
+  name: string;
+  url: string;
+  events: string[];
+  secret: string;
+  enabled: boolean;
+  sslVerification: boolean;
+  deliveries: {
+    total: number;
+    success: number;
+    failed: number;
+    last24h: number;
+  };
+  createdAt: string;
+  lastDeliveryAt?: string;
+}
+
+// ----- Cost / Billing -----
+export interface CostBreakdown {
+  category: "compute" | "database" | "storage" | "bandwidth" | "backup" | "ssl" | "support";
+  label: string;
+  cost: number;
+  unit: string;
+  usage: number;
+  limit?: number;
+  trend: number; // % change
+}
+
+export interface Invoice {
+  id: string;
+  number: string;
+  period: { start: string; end: string };
+  amount: number;
+  currency: string;
+  status: "paid" | "pending" | "failed" | "refunded";
+  method: string;
+  pdfUrl?: string;
+  issuedAt: string;
+}
+
+export interface CostAlert {
+  id: string;
+  threshold: number; // USD
+  current: number;
+  period: "daily" | "monthly";
+  enabled: boolean;
+  lastTriggered?: string;
+}
+
+// ----- API Health Monitoring -----
+export interface ApiHealthCheck {
+  id: string;
+  name: string;
+  url: string;
+  method: "GET" | "HEAD" | "POST";
+  expectedStatus: number;
+  intervalSec: number;
+  timeoutSec: number;
+  regions: string[];
+  enabled: boolean;
+  status: "up" | "down" | "degraded";
+  uptime30d: number; // percentage
+  responseTimeMs: number;
+  lastCheck: string;
+  lastIncident?: string;
+  history: Array<{ timestamp: string; status: "up" | "down"; responseTimeMs: number }>;
+}
+
+export interface ApiMetricPoint {
+  timestamp: string;
+  requests: number;
+  errors: number;
+  avgResponseMs: number;
+  p95ResponseMs: number;
+  p99ResponseMs: number;
+}
+
+// ----- Audit Search -----
+export interface AuditQuery {
+  id: string;
+  name: string;
+  filters: {
+    actors?: string[];
+    categories?: string[];
+    actions?: string[];
+    resources?: string[];
+    dateFrom?: string;
+    dateTo?: string;
+    ipAddresses?: string[];
+  };
+  savedAt: string;
+}
