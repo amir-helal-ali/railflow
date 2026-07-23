@@ -87,7 +87,7 @@ export function DeploymentsView() {
                         {d.branch}
                       </span>
                       <span>{d.author}</span>
-                      <span>{timeAgo(d.startedAt, locale)}</span>
+                      <span suppressHydrationWarning>{timeAgo(d.startedAt, locale)}</span>
                       {d.durationMs && <span>· {formatDuration(d.durationMs, locale)}</span>}
                     </div>
                   </div>

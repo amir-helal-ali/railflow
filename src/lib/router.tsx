@@ -21,6 +21,12 @@ export type View =
   | { name: "team" }
   | { name: "backups" }
   | { name: "certificates" }
+  | { name: "terminal" }
+  | { name: "playground" }
+  | { name: "environments" }
+  | { name: "strategies" }
+  | { name: "alerts" }
+  | { name: "help" }
   | { name: "settings"; tab?: string }
   | { name: "login" };
 

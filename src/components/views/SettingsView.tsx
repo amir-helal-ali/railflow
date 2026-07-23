@@ -320,7 +320,7 @@ function ApiKeysTab() {
             </div>
             <div className="text-end shrink-0">
               <p className="text-[10px] text-muted-foreground">{t("settings.apiKeys.lastUsed")}</p>
-              <p className="text-xs">{k.lastUsedAt ? timeAgo(k.lastUsedAt) : t("settings.apiKeys.never")}</p>
+              <p className="text-xs" suppressHydrationWarning>{k.lastUsedAt ? timeAgo(k.lastUsedAt) : t("settings.apiKeys.never")}</p>
             </div>
             <Button variant="ghost" size="icon" className="text-rose-400 hover:bg-rose-500/10">
               <Trash2 className="w-3.5 h-3.5" />

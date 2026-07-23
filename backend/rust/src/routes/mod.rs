@@ -1,7 +1,10 @@
+pub mod alerts;
 pub mod auth;
 pub mod containers;
 pub mod databases;
 pub mod deployments;
+pub mod environments;
+pub mod exec;
 pub mod projects;
 pub mod resources;
 pub mod server;

@@ -155,7 +155,7 @@ function MemberRow({ member, isCurrentUser }: { member: TeamMember; isCurrentUse
         </div>
         <div className="text-center min-w-[80px]">
           <div className="text-[10px] uppercase tracking-wider">{t("team.lastActive")}</div>
-          <div className="font-medium tabular-nums">{member.lastActiveAt ? timeAgo(member.lastActiveAt, locale) : "—"}</div>
+          <div className="font-medium tabular-nums" suppressHydrationWarning>{member.lastActiveAt ? timeAgo(member.lastActiveAt, locale) : "—"}</div>
         </div>
       </div>
 

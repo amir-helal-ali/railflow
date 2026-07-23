@@ -159,7 +159,7 @@ export function ProjectsView() {
                     </span>
                   )}
                 </div>
-                <span className="flex items-center gap-1 text-[11px] text-muted-foreground/70">
+                <span className="flex items-center gap-1 text-[11px] text-muted-foreground/70" suppressHydrationWarning>
                   <Clock className="w-3 h-3" />
                   {p.lastDeployAt ? timeAgo(p.lastDeployAt, locale) : "—"}
                 </span>

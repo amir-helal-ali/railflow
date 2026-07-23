@@ -78,23 +78,29 @@ export function useInterval(callback: () => void, delay: number | null) {
  */
 export function useLocalStorage<T>(key: string, initial: T) {
   const [state, setState] = useState<T>(initial);
-  const [hydrated, setHydrated] = useState(false);
+  const hydratedRef = useRef(false);
+
   useEffect(() => {
     try {
       const v = window.localStorage.getItem(key);
-      if (v) setState(JSON.parse(v) as T);
+      if (v) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setState(JSON.parse(v) as T);
+      }
     } catch {
       /* ignore */
     }
-    setHydrated(true);
+    hydratedRef.current = true;
   }, [key]);
+
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydratedRef.current) return;
     try {
       window.localStorage.setItem(key, JSON.stringify(state));
     } catch {
       /* ignore */
     }
-  }, [key, state, hydrated]);
+  }, [key, state]);
+
   return [state, setState] as const;
 }

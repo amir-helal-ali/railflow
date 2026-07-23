@@ -19,11 +19,16 @@ import {
   ChevronLeft,
   ChevronRight,
   Zap,
+  TerminalSquare,
+  Code2,
+  Layers,
+  Bell,
+  GitBranch,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
 import { useRouter, type View } from "@/lib/router";
-import { mockProjects, mockDatabases, mockContainers } from "@/lib/mock-data";
+import { mockProjects, mockDatabases, mockContainers, mockAlerts } from "@/lib/mock-data";
 
 type NavItem = {
   icon: React.ElementType;
@@ -41,6 +46,8 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle?
   const { t, dir } = useI18n();
   const { view, navigate } = useRouter();
 
+  const activeAlerts = mockAlerts.filter((a) => !a.resolved && !a.acknowledged).length;
+
   const groups: NavGroup[] = [
     {
       titleKey: "nav.group.overview",
@@ -48,6 +55,8 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle?
         { icon: LayoutDashboard, labelKey: "nav.dashboard", view: { name: "dashboard" } },
         { icon: FolderGit2, labelKey: "nav.projects", view: { name: "projects" }, badge: mockProjects.length },
         { icon: Rocket, labelKey: "nav.deployments", view: { name: "deployments" } },
+        { icon: Layers, labelKey: "environments.title", view: { name: "environments" } },
+        { icon: Bell, labelKey: "alerts.title", view: { name: "alerts" }, badge: activeAlerts },
         { icon: Activity, labelKey: "nav.activity", view: { name: "activity" } },
       ],
     },
@@ -55,20 +64,23 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle?
       titleKey: "nav.group.resources",
       items: [
         { icon: Boxes, labelKey: "nav.containers", view: { name: "containers" }, badge: mockContainers.filter(c => c.status === "running").length },
+        { icon: TerminalSquare, labelKey: "terminal.title", view: { name: "terminal" } },
         { icon: Server, labelKey: "nav.server", view: { name: "server" } },
         { icon: Database, labelKey: "nav.databases", view: { name: "databases" }, badge: mockDatabases.length },
         { icon: HardDrive, labelKey: "nav.volumes", view: { name: "volumes" } },
         { icon: Network, labelKey: "nav.networks", view: { name: "networks" } },
         { icon: Archive, labelKey: "backups.title", view: { name: "backups" } },
         { icon: ShieldCheck, labelKey: "certificates.title", view: { name: "certificates" } },
+        { icon: GitBranch, labelKey: "strategies.title", view: { name: "strategies" } },
       ],
     },
     {
       titleKey: "nav.group.account",
       items: [
+        { icon: Code2, labelKey: "playground.title", view: { name: "playground" } },
+        { icon: BookOpen, labelKey: "help.title", view: { name: "help" } },
         { icon: Users, labelKey: "nav.team", view: { name: "team" } },
         { icon: Settings, labelKey: "nav.settings", view: { name: "settings" } },
-        { icon: BookOpen, labelKey: "nav.docs", view: { name: "dashboard" } },
       ],
     },
   ];

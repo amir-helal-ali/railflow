@@ -204,7 +204,7 @@ function DatabaseDetail({ db }: { db: ManagedDatabase }) {
           <div className="text-[11px] text-muted-foreground space-y-0.5">
             <div className="flex justify-between">
               <span>{t("databases.lastBackup")}:</span>
-              <span className="tabular-nums">{db.backups.lastBackupAt ? timeAgo(db.backups.lastBackupAt, locale) : "—"}</span>
+              <span className="tabular-nums" suppressHydrationWarning>{db.backups.lastBackupAt ? timeAgo(db.backups.lastBackupAt, locale) : "—"}</span>
             </div>
             <div className="flex justify-between">
               <span>{t("databases.retention")}:</span>

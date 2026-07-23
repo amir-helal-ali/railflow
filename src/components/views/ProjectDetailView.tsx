@@ -173,7 +173,7 @@ function OverviewTab({ projectId }: { projectId: string }) {
           <div className="flex items-center gap-2">
             <StatusBadge status={project.health} />
           </div>
-          <div className="text-[11px] text-muted-foreground mt-1">last check: {timeAgo(new Date(Date.now() - 60_000).toISOString(), locale)}</div>
+          <div className="text-[11px] text-muted-foreground mt-1" suppressHydrationWarning>last check: {timeAgo(new Date(Date.now() - 60_000).toISOString(), locale)}</div>
         </div>
       </div>
 
@@ -307,7 +307,7 @@ function DeploymentPipeline({ deployment }: { deployment: Deployment }) {
             <StatusBadge status={deployment.status} />
           </div>
           <p className="text-sm">{deployment.commitMessage}</p>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-muted-foreground mt-1" suppressHydrationWarning>
             {deployment.author} · {deployment.branch} · {timeAgo(deployment.startedAt, locale)}
             {deployment.durationMs && ` · ${formatDuration(deployment.durationMs, locale)}`}
           </p>

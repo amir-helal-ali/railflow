@@ -111,7 +111,7 @@ function NetworkDetail({ net }: { net: typeof mockNetworks[number] }) {
         <Prop label={t("networks.subnet")} value={net.subnet} mono />
         <Prop label={t("networks.gateway")} value={net.gateway} mono />
         <Prop label={t("networks.scope")} value={net.scope} capitalize />
-        <Prop label={t("common.created")} value={timeAgo(net.createdAt, locale)} />
+        <Prop label={t("common.created")} value={timeAgo(net.createdAt, locale)} suppressHydration />
       </div>
 
       {/* Flags */}
@@ -153,11 +153,11 @@ function NetworkDetail({ net }: { net: typeof mockNetworks[number] }) {
   );
 }
 
-function Prop({ label, value, mono, capitalize }: { label: string; value: string; mono?: boolean; capitalize?: boolean }) {
+function Prop({ label, value, mono, capitalize, suppressHydration }: { label: string; value: string; mono?: boolean; capitalize?: boolean; suppressHydration?: boolean }) {
   return (
     <div className="flex items-center justify-between p-2 rounded bg-white/5">
       <span className="text-muted-foreground">{label}</span>
-      <span className={cn(mono ? "font-mono text-violet-300" : "", capitalize && "capitalize")}>{value}</span>
+      <span className={cn(mono ? "font-mono text-violet-300" : "", capitalize && "capitalize")} suppressHydrationWarning={suppressHydration}>{value}</span>
     </div>
   );
 }

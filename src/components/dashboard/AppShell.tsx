@@ -20,6 +20,12 @@ import { ActivityView } from "@/components/views/ActivityView";
 import { TeamView } from "@/components/views/TeamView";
 import { BackupsView } from "@/components/views/BackupsView";
 import { CertificatesView } from "@/components/views/CertificatesView";
+import { TerminalView } from "@/components/views/TerminalView";
+import { PlaygroundView } from "@/components/views/PlaygroundView";
+import { EnvironmentsView } from "@/components/views/EnvironmentsView";
+import { StrategiesView } from "@/components/views/StrategiesView";
+import { AlertsView } from "@/components/views/AlertsView";
+import { HelpView } from "@/components/views/HelpView";
 import { useLocalStorage } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -112,6 +118,12 @@ export function AppShell() {
               {view.name === "team" && <TeamView />}
               {view.name === "backups" && <BackupsView />}
               {view.name === "certificates" && <CertificatesView />}
+              {view.name === "terminal" && <TerminalView />}
+              {view.name === "playground" && <PlaygroundView />}
+              {view.name === "environments" && <EnvironmentsView />}
+              {view.name === "strategies" && <StrategiesView />}
+              {view.name === "alerts" && <AlertsView />}
+              {view.name === "help" && <HelpView />}
               {view.name === "settings" && <SettingsView tab={view.tab} />}
             </ViewBoundary>
           </div>
