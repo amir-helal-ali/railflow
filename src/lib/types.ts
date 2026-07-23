@@ -709,3 +709,84 @@ export interface AuditQuery {
   };
   savedAt: string;
 }
+
+// ----- Marketplace Templates -----
+export interface Template {
+  id: string;
+  name: string;
+  description: string;
+  category: "framework" | "api" | "static" | "database" | "ml" | "worker" | "fullstack";
+  runtime: string;
+  framework: string;
+  icon: string;
+  author: string;
+  stars: number;
+  deployments: number;
+  tags: string[];
+  features: string[];
+  repoUrl: string;
+  demoUrl?: string;
+  buildCommand: string;
+  startCommand: string;
+  installCommand: string;
+  envVars: Array<{ key: string; description: string; required: boolean }>;
+  estimatedDeployTime: number; // seconds
+  lastUpdated: string;
+}
+
+// ----- Multi-region / Edge -----
+export interface Region {
+  id: string;
+  name: string;
+  code: string;
+  country: string;
+  flag: string;
+  latencyMs: number;
+  status: "active" | "maintenance" | "planned";
+  resources: {
+    cpuAvailable: number;
+    memoryAvailableGb: number;
+    storageAvailableGb: number;
+  };
+  projects: number;
+  isDefault: boolean;
+}
+
+export interface EdgeRule {
+  id: string;
+  pattern: string;
+  action: "cache" | "redirect" | "rewrite" | "block";
+  value: string;
+  ttl?: number;
+}
+
+export interface EdgeConfig {
+  projectId: string;
+  primaryRegion: string;
+  replicaRegions: string[];
+  edgeCache: boolean;
+  cdnEnabled: boolean;
+  customRules: EdgeRule[];
+}
+
+// ----- Aggregated Logs -----
+export interface AggregatedLog {
+  id: string;
+  timestamp: string;
+  containerName: string;
+  containerId: string;
+  level: "info" | "warn" | "error" | "debug" | "success";
+  source: "stdout" | "stderr";
+  message: string;
+  projectId?: string;
+}
+
+export interface LogStream {
+  id: string;
+  name: string;
+  containers: string[];
+  filter: string;
+  level: "all" | "info" | "warn" | "error" | "debug" | "success";
+  enabled: boolean;
+  lastMessageAt?: string;
+}

@@ -29,11 +29,14 @@ import {
   DollarSign,
   HeartPulse,
   Search,
+  Store,
+  Globe,
+  ScrollText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
 import { useRouter, type View } from "@/lib/router";
-import { mockProjects, mockDatabases, mockContainers, mockAlerts, mockPipelines, mockApiHealthChecks } from "@/lib/mock-data";
+import { mockProjects, mockDatabases, mockContainers, mockAlerts, mockPipelines, mockApiHealthChecks, mockTemplates } from "@/lib/mock-data";
 
 type NavItem = {
   icon: React.ElementType;
@@ -60,6 +63,7 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle?
       items: [
         { icon: LayoutDashboard, labelKey: "nav.dashboard", view: { name: "dashboard" } },
         { icon: FolderGit2, labelKey: "nav.projects", view: { name: "projects" }, badge: mockProjects.length },
+        { icon: Store, labelKey: "marketplace.title", view: { name: "marketplace" }, badge: mockTemplates.length },
         { icon: Rocket, labelKey: "nav.deployments", view: { name: "deployments" } },
         { icon: Layers, labelKey: "environments.title", view: { name: "environments" } },
         { icon: Workflow, labelKey: "pipelines.title", view: { name: "pipelines" }, badge: mockPipelines.length },
@@ -73,11 +77,13 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle?
       items: [
         { icon: Boxes, labelKey: "nav.containers", view: { name: "containers" }, badge: mockContainers.filter(c => c.status === "running").length },
         { icon: TerminalSquare, labelKey: "terminal.title", view: { name: "terminal" } },
+        { icon: ScrollText, labelKey: "logsAgg.title", view: { name: "logsAgg" } },
         { icon: Server, labelKey: "nav.server", view: { name: "server" } },
         { icon: HeartPulse, labelKey: "apiHealth.title", view: { name: "apiHealth" }, badge: downServices || undefined },
         { icon: Database, labelKey: "nav.databases", view: { name: "databases" }, badge: mockDatabases.length },
         { icon: HardDrive, labelKey: "nav.volumes", view: { name: "volumes" } },
         { icon: Network, labelKey: "nav.networks", view: { name: "networks" } },
+        { icon: Globe, labelKey: "regions.title", view: { name: "regions" } },
         { icon: Archive, labelKey: "backups.title", view: { name: "backups" } },
         { icon: ShieldCheck, labelKey: "certificates.title", view: { name: "certificates" } },
         { icon: GitBranch, labelKey: "strategies.title", view: { name: "strategies" } },

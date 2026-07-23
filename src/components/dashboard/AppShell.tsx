@@ -31,6 +31,9 @@ import { WebhooksView } from "@/components/views/WebhooksView";
 import { CostView } from "@/components/views/CostView";
 import { ApiHealthView } from "@/components/views/ApiHealthView";
 import { AuditSearchView } from "@/components/views/AuditSearchView";
+import { MarketplaceView } from "@/components/views/MarketplaceView";
+import { RegionsView } from "@/components/views/RegionsView";
+import { LogsAggView } from "@/components/views/LogsAggView";
 import { useLocalStorage } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -134,6 +137,9 @@ export function AppShell() {
               {view.name === "cost" && <CostView />}
               {view.name === "apiHealth" && <ApiHealthView />}
               {view.name === "auditSearch" && <AuditSearchView />}
+              {view.name === "marketplace" && <MarketplaceView />}
+              {view.name === "regions" && <RegionsView />}
+              {view.name === "logsAgg" && <LogsAggView />}
               {view.name === "settings" && <SettingsView tab={view.tab} />}
             </ViewBoundary>
           </div>

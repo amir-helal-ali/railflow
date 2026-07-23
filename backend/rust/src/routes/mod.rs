@@ -5,6 +5,7 @@ pub mod databases;
 pub mod deployments;
 pub mod environments;
 pub mod exec;
+pub mod marketplace;
 pub mod pipelines;
 pub mod projects;
 pub mod resources;

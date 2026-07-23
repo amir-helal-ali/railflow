@@ -32,6 +32,9 @@ export type View =
   | { name: "cost" }
   | { name: "apiHealth" }
   | { name: "auditSearch" }
+  | { name: "marketplace" }
+  | { name: "regions" }
+  | { name: "logsAgg" }
   | { name: "settings"; tab?: string }
   | { name: "login" };
 

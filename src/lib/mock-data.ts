@@ -39,6 +39,11 @@ import type {
   ApiHealthCheck,
   ApiMetricPoint,
   AuditQuery,
+  Template,
+  Region,
+  EdgeConfig,
+  AggregatedLog,
+  LogStream,
 } from "./types";
 
 export const mockUser: User = {
@@ -1442,4 +1447,102 @@ export const mockAuditQueries: AuditQuery[] = [
   { id: "aq_2", name: "Admin actions by Omar", filters: { actors: ["Omar Khaled"], categories: ["project", "container", "database"] }, savedAt: dayAgo(30) },
   { id: "aq_3", name: "Logins from Egypt", filters: { categories: ["auth"], ipAddresses: ["156.21x.x.x", "197.43.x.x"] }, savedAt: dayAgo(45) },
   { id: "aq_4", name: "All 2FA changes", filters: { categories: ["auth", "settings"], actions: ["enabled 2FA", "disabled 2FA"] }, savedAt: dayAgo(60) },
+];
+
+// ---------- Marketplace Templates ----------
+export const mockTemplates: Template[] = [
+  { id: "tpl_next", name: "Next.js Starter", description: "Production-ready Next.js 16 app with App Router, Tailwind CSS 4, shadcn/ui, and TypeScript.", category: "framework", runtime: "node", framework: "Next.js 16", icon: "▲", author: "Railflow", stars: 4823, deployments: 12450, tags: ["react", "ssr", "tailwind"], features: ["App Router", "Server Components", "shadcn/ui", "Dark mode"], repoUrl: "https://github.com/railflow/next-starter", demoUrl: "https://demo-next.railflow.io", buildCommand: "next build", startCommand: "next start", installCommand: "npm install", envVars: [], estimatedDeployTime: 87, lastUpdated: dayAgo(3) },
+  { id: "tpl_astro", name: "Astro Blog", description: "Lightning-fast static blog with MDX support, RSS feeds, and built-in search.", category: "static", runtime: "static", framework: "Astro", icon: "🚀", author: "Railflow", stars: 2104, deployments: 5230, tags: ["static", "blog", "mdx"], features: ["MDX support", "RSS feeds", "Built-in search", "Sitemap"], repoUrl: "https://github.com/railflow/astro-blog", demoUrl: "https://demo-astro.railflow.io", buildCommand: "astro build", startCommand: "npx serve dist", installCommand: "npm install", envVars: [], estimatedDeployTime: 42, lastUpdated: dayAgo(7) },
+  { id: "tpl_rust_api", name: "Rust API (axum)", description: "High-performance REST API with axum, sqlx, JWT auth, and OpenAPI docs.", category: "api", runtime: "rust", framework: "axum", icon: "🦀", author: "Railflow", stars: 1876, deployments: 3420, tags: ["rust", "api", "jwt"], features: ["JWT auth", "SQLx + PostgreSQL", "OpenAPI/Swagger", "Rate limiting"], repoUrl: "https://github.com/railflow/rust-api", buildCommand: "cargo build --release", startCommand: "./api", installCommand: "cargo fetch", envVars: [{ key: "DATABASE_URL", description: "PostgreSQL connection string", required: true }, { key: "JWT_SECRET", description: "Secret for JWT signing", required: true }], estimatedDeployTime: 145, lastUpdated: dayAgo(2) },
+  { id: "tpl_go_worker", name: "Go Worker", description: "Background job processor with Redis queues, scheduled tasks, and dead-letter handling.", category: "worker", runtime: "go", framework: "Go + Redis", icon: "🐹", author: "community", stars: 892, deployments: 1240, tags: ["go", "worker", "redis"], features: ["Redis queues", "Cron schedules", "Dead-letter queues", "Health checks"], repoUrl: "https://github.com/railflow/go-worker", buildCommand: "go build -o worker ./cmd", startCommand: "./worker", installCommand: "go mod download", envVars: [{ key: "REDIS_URL", description: "Redis connection URL", required: true }], estimatedDeployTime: 64, lastUpdated: dayAgo(5) },
+  { id: "tpl_python_fastapi", name: "FastAPI + SQLAlchemy", description: "Modern Python API with FastAPI, async SQLAlchemy, Alembic migrations, and Pydantic v2.", category: "api", runtime: "python", framework: "FastAPI", icon: "🐍", author: "community", stars: 3421, deployments: 8900, tags: ["python", "api", "async"], features: ["Auto OpenAPI docs", "Async SQLAlchemy", "Alembic migrations", "Pydantic v2"], repoUrl: "https://github.com/railflow/fastapi-template", demoUrl: "https://demo-fastapi.railflow.io", buildCommand: "pip install -r requirements.txt", startCommand: "uvicorn app:app --host 0.0.0.0 --port 8000", installCommand: "pip install -r requirements.txt", envVars: [{ key: "DATABASE_URL", description: "PostgreSQL URL", required: true }], estimatedDeployTime: 112, lastUpdated: dayAgo(1) },
+  { id: "tpl_next_prisma", name: "Next.js + Prisma", description: "Full-stack app with Next.js, Prisma ORM, NextAuth, and PostgreSQL.", category: "fullstack", runtime: "node", framework: "Next.js + Prisma", icon: "🔺", author: "Railflow", stars: 5634, deployments: 15600, tags: ["fullstack", "prisma", "auth"], features: ["Prisma ORM", "NextAuth.js", "PostgreSQL", "Server Actions"], repoUrl: "https://github.com/railflow/next-prisma", demoUrl: "https://demo-prisma.railflow.io", buildCommand: "prisma generate && next build", startCommand: "next start", installCommand: "npm install", envVars: [{ key: "DATABASE_URL", description: "PostgreSQL URL", required: true }, { key: "NEXTAUTH_SECRET", description: "NextAuth secret", required: true }], estimatedDeployTime: 124, lastUpdated: dayAgo(4) },
+  { id: "tpl_ml_pytorch", name: "ML Inference (PyTorch)", description: "Real-time ML inference service with PyTorch, ONNX export, and batched predictions.", category: "ml", runtime: "python", framework: "FastAPI + PyTorch", icon: "🧠", author: "community", stars: 1245, deployments: 890, tags: ["ml", "pytorch", "inference"], features: ["ONNX export", "Batched predictions", "GPU support", "Model versioning"], repoUrl: "https://github.com/railflow/ml-inference", buildCommand: "pip install -r requirements.txt", startCommand: "uvicorn app:app --host 0.0.0.0 --port 8000", installCommand: "pip install -r requirements.txt", envVars: [{ key: "MODEL_PATH", description: "Path to model weights", required: true }], estimatedDeployTime: 312, lastUpdated: dayAgo(6) },
+  { id: "tpl_bun_api", name: "Bun API (Hono)", description: "Ultra-fast API with Bun runtime, Hono framework, and native TypeScript.", category: "api", runtime: "bun", framework: "Hono", icon: "🍞", author: "community", stars: 1876, deployments: 4200, tags: ["bun", "api", "fast"], features: ["Bun runtime", "Hono framework", "Zero config", "TypeScript native"], repoUrl: "https://github.com/railflow/bun-api", demoUrl: "https://demo-bun.railflow.io", buildCommand: "bun run build", startCommand: "bun run src/index.ts", installCommand: "bun install", envVars: [], estimatedDeployTime: 38, lastUpdated: dayAgo(2) },
+  { id: "tpl_svelte", name: "SvelteKit App", description: "Full-stack SvelteKit app with SSR, TypeScript, and Tailwind CSS.", category: "framework", runtime: "node", framework: "SvelteKit", icon: "🧡", author: "community", stars: 2340, deployments: 5600, tags: ["svelte", "ssr"], features: ["SSR/SSG", "TypeScript", "Tailwind CSS", "File-based routing"], repoUrl: "https://github.com/railflow/sveltekit-template", demoUrl: "https://demo-svelte.railflow.io", buildCommand: "vite build", startCommand: "node build", installCommand: "npm install", envVars: [], estimatedDeployTime: 56, lastUpdated: dayAgo(8) },
+  { id: "tpl_redis_queue", name: "Redis Queue Worker", description: "Distributed job queue with Redis Streams, Python, and monitoring dashboard.", category: "worker", runtime: "python", framework: "Redis + Python", icon: "⚡", author: "community", stars: 654, deployments: 1230, tags: ["redis", "queue", "python"], features: ["Redis Streams", "Worker monitoring", "Auto-retry", "Priority queues"], repoUrl: "https://github.com/railflow/redis-queue", buildCommand: "pip install -r requirements.txt", startCommand: "python worker.py", installCommand: "pip install -r requirements.txt", envVars: [{ key: "REDIS_URL", description: "Redis connection URL", required: true }], estimatedDeployTime: 48, lastUpdated: dayAgo(10) },
+  { id: "tpl_deno_api", name: "Deno API (Fresh)", description: "Modern API with Deno, Fresh framework, and built-in TypeScript.", category: "api", runtime: "deno", framework: "Fresh", icon: "🦕", author: "community", stars: 1023, deployments: 2100, tags: ["deno", "api"], features: ["Deno runtime", "Fresh framework", "Islands architecture", "TypeScript native"], repoUrl: "https://github.com/railflow/deno-api", buildCommand: "deno task build", startCommand: "deno task start", installCommand: "deno cache src/main.ts", envVars: [], estimatedDeployTime: 52, lastUpdated: dayAgo(5) },
+  { id: "tpl_postgres_admin", name: "PostgreSQL + pgAdmin", description: "Managed PostgreSQL with pgAdmin web interface and automated backups.", category: "database", runtime: "docker", framework: "PostgreSQL 17", icon: "🐘", author: "Railflow", stars: 3421, deployments: 18900, tags: ["postgres", "database", "pgadmin"], features: ["PostgreSQL 17", "pgAdmin UI", "Auto backups", "Point-in-time recovery"], repoUrl: "https://github.com/railflow/postgres-template", buildCommand: "", startCommand: "postgres", installCommand: "", envVars: [{ key: "POSTGRES_PASSWORD", description: "Root password", required: true }, { key: "POSTGRES_DB", description: "Default database name", required: false }], estimatedDeployTime: 18, lastUpdated: dayAgo(1) },
+];
+
+// ---------- Regions ----------
+export const mockRegions: Region[] = [
+  { id: "r_fra1", name: "Frankfurt", code: "fra1", country: "Germany", flag: "🇩🇪", latencyMs: 12, status: "active", resources: { cpuAvailable: 48, memoryAvailableGb: 192, storageAvailableGb: 2400 }, projects: 6, isDefault: true },
+  { id: "r_ams3", name: "Amsterdam", code: "ams3", country: "Netherlands", flag: "🇳🇱", latencyMs: 18, status: "active", resources: { cpuAvailable: 32, memoryAvailableGb: 128, storageAvailableGb: 1600 }, projects: 0, isDefault: false },
+  { id: "r_london", name: "London", code: "lhr1", country: "UK", flag: "🇬🇧", latencyMs: 22, status: "active", resources: { cpuAvailable: 64, memoryAvailableGb: 256, storageAvailableGb: 3200 }, projects: 0, isDefault: false },
+  { id: "r_ny1", name: "New York", code: "ny1", country: "USA", flag: "🇺🇸", latencyMs: 87, status: "active", resources: { cpuAvailable: 96, memoryAvailableGb: 384, storageAvailableGb: 4800 }, projects: 0, isDefault: false },
+  { id: "r_sin1", name: "Singapore", code: "sin1", country: "Singapore", flag: "🇸🇬", latencyMs: 167, status: "active", resources: { cpuAvailable: 24, memoryAvailableGb: 96, storageAvailableGb: 1200 }, projects: 0, isDefault: false },
+  { id: "r_tokyo", name: "Tokyo", code: "tyo1", country: "Japan", flag: "🇯🇵", latencyMs: 198, status: "maintenance", resources: { cpuAvailable: 0, memoryAvailableGb: 0, storageAvailableGb: 0 }, projects: 0, isDefault: false },
+  { id: "r_sydney", name: "Sydney", code: "syd1", country: "Australia", flag: "🇦🇺", latencyMs: 245, status: "planned", resources: { cpuAvailable: 0, memoryAvailableGb: 0, storageAvailableGb: 0 }, projects: 0, isDefault: false },
+];
+
+export const mockEdgeConfigs: EdgeConfig[] = mockProjects.slice(0, 4).map((p, i) => ({
+  projectId: p.id,
+  primaryRegion: "r_fra1",
+  replicaRegions: i === 0 ? ["r_ny1", "r_sin1"] : i === 1 ? ["r_ny1"] : [],
+  edgeCache: i < 3,
+  cdnEnabled: i < 2,
+  customRules: i === 0 ? [
+    { id: "rule_1", pattern: "/api/*", action: "cache" as const, value: "", ttl: 60 },
+    { id: "rule_2", pattern: "/old/*", action: "redirect" as const, value: "/new/$1", ttl: undefined },
+    { id: "rule_3", pattern: "/blocked", action: "block" as const, value: "403", ttl: undefined },
+  ] : [],
+}));
+
+// ---------- Aggregated Logs ----------
+const logSources = [
+  { name: "web-platform-prod", id: "c_web_1", projectId: "p_web" },
+  { name: "api-gateway-prod", id: "c_api_1", projectId: "p_api" },
+  { name: "workers-prod", id: "c_worker_1", projectId: "p_worker" },
+  { name: "ml-inference-prod", id: "c_ml_1", projectId: "p_ml" },
+  { name: "docs-prod", id: "c_docs_1", projectId: "p_docs" },
+];
+
+const logTemplates: Array<[AggregatedLog["level"], string]> = [
+  ["info", "GET /api/v1/users 200 12ms"],
+  ["info", "POST /api/v1/deployments 201 87ms"],
+  ["success", "Health check passed (status=200, ms=42)"],
+  ["info", "Worker connected to Redis at redis-cache:6379"],
+  ["warn", "Rate limit threshold reached for IP 197.43.x.x (1000 req/min)"],
+  ["info", "WebSocket connection established (client=c_8x2a)"],
+  ["success", "Build completed in 87s (size: 4.2MB)"],
+  ["info", "Image pushed to ghcr.io/railflow/web-platform:main"],
+  ["error", "Failed to connect to stripe API (timeout after 5000ms) — retrying"],
+  ["info", "Stripe API retry succeeded (attempt 2)"],
+  ["debug", "Cache hit for key user:42:profile"],
+  ["success", "Deployment d_2 marked as live"],
+  ["info", "Container c_web_1 health status: healthy"],
+  ["warn", "Memory usage at 78% on container c_ml_1"],
+  ["error", "Build failed: Cannot find module '@notifee/react-native'"],
+  ["info", "Pulling image ghcr.io/railflow/ml-inference:main (1.2GB)"],
+  ["success", "Image pulled successfully"],
+  ["info", "Starting container ml-inference-prod"],
+  ["info", "GET /health 200 8ms"],
+  ["error", "Database connection pool exhausted (max=100, active=100)"],
+];
+
+export function generateAggregatedLogs(count: number = 100): AggregatedLog[] {
+  const out: AggregatedLog[] = [];
+  for (let i = 0; i < count; i++) {
+    const [level, msg] = logTemplates[Math.floor(Math.random() * logTemplates.length)];
+    const src = logSources[Math.floor(Math.random() * logSources.length)];
+    out.push({
+      id: `alog_${i}_${Math.random().toString(36).slice(2, 8)}`,
+      timestamp: new Date(now - i * (3_000 + Math.random() * 10_000)).toISOString(),
+      containerName: src.name,
+      containerId: src.id,
+      level,
+      source: level === "error" || level === "warn" ? "stderr" : "stdout",
+      message: msg,
+      projectId: src.projectId,
+    });
+  }
+  return out.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+}
+
+export const mockLogStreams: LogStream[] = [
+  { id: "ls_1", name: "Production errors", containers: ["c_web_1", "c_api_1", "c_worker_1"], filter: "level:error", level: "error", enabled: true, lastMessageAt: minAgo(0.5) },
+  { id: "ls_2", name: "API Gateway traffic", containers: ["c_api_1"], filter: "path:/api/*", level: "all", enabled: true, lastMessageAt: minAgo(0.2) },
+  { id: "ls_3", name: "ML inference alerts", containers: ["c_ml_1"], filter: "level:warn OR level:error", level: "warn", enabled: true, lastMessageAt: hourAgo(1) },
+  { id: "ls_4", name: "All deployments", containers: [], filter: "message:deployment", level: "all", enabled: false, lastMessageAt: hourAgo(3) },
 ];
