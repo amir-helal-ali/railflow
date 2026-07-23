@@ -73,24 +73,28 @@ export function useInterval(callback: () => void, delay: number | null) {
 }
 
 /**
- * useLocalStorage — persisted state
+ * useLocalStorage — persisted state.
+ * SSR-safe: returns initial on server, hydrates on client mount.
  */
 export function useLocalStorage<T>(key: string, initial: T) {
-  const [state, setState] = useState<T>(() => {
-    if (typeof window === "undefined") return initial;
+  const [state, setState] = useState<T>(initial);
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
     try {
       const v = window.localStorage.getItem(key);
-      return v ? (JSON.parse(v) as T) : initial;
+      if (v) setState(JSON.parse(v) as T);
     } catch {
-      return initial;
+      /* ignore */
     }
-  });
+    setHydrated(true);
+  }, [key]);
   useEffect(() => {
+    if (!hydrated) return;
     try {
       window.localStorage.setItem(key, JSON.stringify(state));
     } catch {
       /* ignore */
     }
-  }, [key, state]);
+  }, [key, state, hydrated]);
   return [state, setState] as const;
 }

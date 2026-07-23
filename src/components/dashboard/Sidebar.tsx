@@ -14,6 +14,8 @@ import {
   Users,
   Activity,
   BookOpen,
+  ShieldCheck,
+  Archive,
   ChevronLeft,
   ChevronRight,
   Zap,
@@ -21,7 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
 import { useRouter, type View } from "@/lib/router";
-import { mockProjects } from "@/lib/mock-data";
+import { mockProjects, mockDatabases, mockContainers } from "@/lib/mock-data";
 
 type NavItem = {
   icon: React.ElementType;
@@ -46,23 +48,25 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle?
         { icon: LayoutDashboard, labelKey: "nav.dashboard", view: { name: "dashboard" } },
         { icon: FolderGit2, labelKey: "nav.projects", view: { name: "projects" }, badge: mockProjects.length },
         { icon: Rocket, labelKey: "nav.deployments", view: { name: "deployments" } },
-        { icon: Activity, labelKey: "nav.activity", view: { name: "dashboard" } },
+        { icon: Activity, labelKey: "nav.activity", view: { name: "activity" } },
       ],
     },
     {
       titleKey: "nav.group.resources",
       items: [
-        { icon: Boxes, labelKey: "nav.containers", view: { name: "containers" } },
+        { icon: Boxes, labelKey: "nav.containers", view: { name: "containers" }, badge: mockContainers.filter(c => c.status === "running").length },
         { icon: Server, labelKey: "nav.server", view: { name: "server" } },
-        { icon: Database, labelKey: "nav.databases", view: { name: "containers" } },
-        { icon: HardDrive, labelKey: "nav.volumes", view: { name: "containers" } },
-        { icon: Network, labelKey: "nav.networks", view: { name: "containers" } },
+        { icon: Database, labelKey: "nav.databases", view: { name: "databases" }, badge: mockDatabases.length },
+        { icon: HardDrive, labelKey: "nav.volumes", view: { name: "volumes" } },
+        { icon: Network, labelKey: "nav.networks", view: { name: "networks" } },
+        { icon: Archive, labelKey: "backups.title", view: { name: "backups" } },
+        { icon: ShieldCheck, labelKey: "certificates.title", view: { name: "certificates" } },
       ],
     },
     {
       titleKey: "nav.group.account",
       items: [
-        { icon: Users, labelKey: "nav.team", view: { name: "settings", tab: "team" } },
+        { icon: Users, labelKey: "nav.team", view: { name: "team" } },
         { icon: Settings, labelKey: "nav.settings", view: { name: "settings" } },
         { icon: BookOpen, labelKey: "nav.docs", view: { name: "dashboard" } },
       ],

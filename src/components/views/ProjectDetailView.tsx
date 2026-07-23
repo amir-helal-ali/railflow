@@ -197,7 +197,7 @@ function OverviewTab({ projectId }: { projectId: string }) {
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <StatusBadge status={d.status} />
-                    <span className="text-[10px] text-muted-foreground/70">{timeAgo(d.startedAt, locale)}</span>
+                    <span className="text-[10px] text-muted-foreground/70" suppressHydrationWarning>{timeAgo(d.startedAt, locale)}</span>
                   </div>
                 </div>
               ))}
@@ -271,7 +271,7 @@ function DeploymentsTab({ deployments }: { deployments: Deployment[] }) {
                   <span className="text-[10px] text-muted-foreground">{d.branch}</span>
                 </div>
                 <p className="text-xs truncate mt-1">{d.commitMessage}</p>
-                <p className="text-[10px] text-muted-foreground/70 mt-0.5">{timeAgo(d.startedAt, locale)}</p>
+                <p className="text-[10px] text-muted-foreground/70 mt-0.5" suppressHydrationWarning>{timeAgo(d.startedAt, locale)}</p>
               </div>
             </button>
           ))}
@@ -494,7 +494,8 @@ function EnvironmentTab() {
 
 function LogsTab({ projectName }: { projectName: string }) {
   const { t } = useI18n();
-  const [logs, setLogs] = React.useState<LogEntry[]>(() => generateLogs(50));
+  const [logs, setLogs] = React.useState<LogEntry[]>([]);
+  React.useEffect(() => { setLogs(generateLogs(50)); }, []);
   const [filter, setFilter] = React.useState("");
   const [autoScroll, setAutoScroll] = React.useState(true);
   const containerRef = React.useRef<HTMLDivElement>(null);

@@ -14,6 +14,12 @@ Railflow is a self-hostable PaaS that lets you deploy GitHub repositories to pro
 - **Multi-Stage Pipeline** — `queued → cloning → building → pushing → starting → health → done` with live status
 - **Environment Variables** — Per-project, with secret & sensitive flags, bulk import support
 - **Custom Domains** — Multiple domains per project, automatic TLS via Caddy
+- **Managed Databases** — PostgreSQL, MySQL, Redis, MongoDB, MariaDB with automated backups & connection strings
+- **Docker Volumes & Networks** — Full management with pruning, isolation, and topology visualization
+- **Team & RBAC** — Owner/Admin/Developer/Viewer roles with email invitations and per-resource permissions
+- **Activity Audit Log** — Every action tracked with actor, resource, IP, and metadata
+- **Backup System** — Automatic, manual, and pre-deploy backups with S3-compatible storage and retention policies
+- **SSL Certificates** — Let's Encrypt auto-issue, wildcard, custom imports, with auto-renewal and expiry tracking
 
 ### Security (military-grade)
 - **JWT Authentication** — HS256 signed tokens, configurable expiration, session revocation

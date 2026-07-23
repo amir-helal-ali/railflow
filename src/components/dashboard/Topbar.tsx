@@ -116,7 +116,7 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium truncate">{d.projectName}</p>
                   <p className="text-[11px] text-muted-foreground truncate">{d.commitMessage}</p>
-                  <p className="text-[10px] text-muted-foreground/70 mt-0.5">{timeAgo(d.startedAt, locale)}</p>
+                  <p className="text-[10px] text-muted-foreground/70 mt-0.5" suppressHydrationWarning>{timeAgo(d.startedAt, locale)}</p>
                 </div>
               </DropdownMenuItem>
             ))}

@@ -1,7 +1,9 @@
 pub mod auth;
 pub mod containers;
+pub mod databases;
 pub mod deployments;
 pub mod projects;
+pub mod resources;
 pub mod server;
 pub mod webhooks;
 pub mod ws;

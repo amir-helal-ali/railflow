@@ -35,8 +35,21 @@ export function DashboardView() {
   const { t, locale } = useI18n();
   const { navigate } = useRouter();
 
-  const [series, setSeries] = React.useState(generateMultiSeries());
+  // Generate series only on client to avoid hydration mismatch from Math.random
+  const [series, setSeries] = React.useState<ReturnType<typeof generateMultiSeries> | null>(null);
+  React.useEffect(() => {
+    setSeries(generateMultiSeries());
+  }, []);
   useInterval(() => setSeries(generateMultiSeries()), 10_000);
+
+  // Until client-side series are generated, use empty placeholders
+  const cpuSeries = series?.cpu;
+  const memSeries = series?.memory;
+  const netSeries = series?.network;
+  const deploySeries = series?.deployments;
+  const sparkCpu = cpuSeries?.points.map((p) => p.value) ?? [];
+  const sparkMem = memSeries?.points.map((p) => p.value) ?? [];
+  const sparkDeploy = deploySeries?.points.map((p) => p.value) ?? [];
 
   const activeProjects = mockProjects.filter((p) => p.status === "done").length;
   const runningContainers = mockContainers.filter((c) => c.status === "running").length;
@@ -46,7 +59,7 @@ export function DashboardView() {
   const hourlyDeploys = React.useMemo(() => {
     return Array.from({ length: 24 }, (_, i) => {
       const hour = (new Date().getHours() - 23 + i + 24) % 24;
-      return { label: `${hour.toString().padStart(2, "0")}`, value: Math.floor(Math.random() * 4) + 1 };
+      return { label: `${hour.toString().padStart(2, "0")}`, value: 0 };
     });
   }, []);
 
@@ -82,7 +95,7 @@ export function DashboardView() {
           value={activeProjects}
           unit={`/ ${mockProjects.length}`}
           delta={{ value: 12.5, positive: true }}
-          spark={series.deployments.points.map((p) => p.value)}
+          spark={sparkDeploy}
           color="oklch(0.72 0.22 295)"
           icon={<GitBranch className="w-4 h-4" />}
         />
@@ -91,7 +104,7 @@ export function DashboardView() {
           value={runningContainers}
           unit={`/ ${mockContainers.length}`}
           delta={{ value: 0, positive: true }}
-          spark={series.cpu.points.map((p) => p.value)}
+          spark={sparkCpu}
           color="oklch(0.78 0.17 190)"
           icon={<Boxes className="w-4 h-4" />}
         />
@@ -100,7 +113,7 @@ export function DashboardView() {
           value={mockServerInfo.cpu.overallUsage.toFixed(1)}
           unit="%"
           delta={{ value: 3.2, positive: false }}
-          spark={series.cpu.points.map((p) => p.value)}
+          spark={sparkCpu}
           color="oklch(0.75 0.2 145)"
           icon={<Cpu className="w-4 h-4" />}
         />
@@ -109,7 +122,7 @@ export function DashboardView() {
           value={((mockServerInfo.memory.usedGb / mockServerInfo.memory.totalGb) * 100).toFixed(0)}
           unit="%"
           delta={{ value: 1.8, positive: false }}
-          spark={series.memory.points.map((p) => p.value)}
+          spark={sparkMem}
           color="oklch(0.78 0.18 75)"
           icon={<MemoryStick className="w-4 h-4" />}
         />
@@ -137,7 +150,8 @@ export function DashboardView() {
               </div>
             }
           />
-          <AreaTimeChart series={[series.cpu, series.memory, series.network]} height={240} />
+          {series && <AreaTimeChart series={[series.cpu, series.memory, series.network]} height={240} />}
+          {!series && <div className="h-[240px] shimmer rounded-lg" />}
         </div>
 
         {/* Health score */}
@@ -201,7 +215,7 @@ export function DashboardView() {
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   <StatusBadge status={d.status} />
-                  <span className="text-[10px] text-muted-foreground/70">{timeAgo(d.startedAt, locale)}</span>
+                  <span className="text-[10px] text-muted-foreground/70" suppressHydrationWarning>{timeAgo(d.startedAt, locale)}</span>
                 </div>
               </button>
             ))}
@@ -287,7 +301,7 @@ export function DashboardView() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-xs">{e.message}</p>
-                    <p className="text-[10px] text-muted-foreground/70">{timeAgo(e.time, locale)} · {e.type}</p>
+                    <p className="text-[10px] text-muted-foreground/70" suppressHydrationWarning>{timeAgo(e.time, locale)} · {e.type}</p>
                   </div>
                 </div>
               );

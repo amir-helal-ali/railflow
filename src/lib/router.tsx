@@ -14,6 +14,13 @@ export type View =
   | { name: "containers" }
   | { name: "deployments" }
   | { name: "server" }
+  | { name: "databases" }
+  | { name: "volumes" }
+  | { name: "networks" }
+  | { name: "activity" }
+  | { name: "team" }
+  | { name: "backups" }
+  | { name: "certificates" }
   | { name: "settings"; tab?: string }
   | { name: "login" };
 

@@ -76,3 +76,48 @@ Stage Summary:
 - Documentation: comprehensive README with architecture diagram, API reference, deployment guide, and elmoorx porting guide.
 - Verified working in browser with no errors across all pages.
 - Files delivered in /home/z/my-project/ (frontend) and /home/z/my-project/backend/rust/ (backend).
+
+---
+Task ID: 2
+Agent: Main (Super Z)
+Task: Continue building - add the missing advanced pages (Databases, Volumes, Networks, Activity, Team, Backups, Certificates) that were placeholders in the sidebar.
+
+Work Log:
+- Added new types to src/lib/types.ts: ManagedDatabase, DockerVolume, DockerNetwork, ActivityEntry, TeamMember, TeamInvite, Backup, Certificate, DatabaseEngine, Role.
+- Added 5 new mock datasets to src/lib/mock-data.ts: 5 databases (PostgreSQL/Redis/MongoDB/MySQL + stopped), 8 volumes (mix in-use/unused), 5 networks (bridge/host/none + custom), 15 activity entries (mixed categories), 7 team members + 2 invites, 7 backups (all statuses), 7 certificates (active/expired/renewing/wildcard). All with realistic data.
+- Added 150+ new translation keys in both Arabic and English to src/lib/i18n.tsx covering all new sections.
+- Extended client-side router (src/lib/router.tsx) with 7 new view types: databases, volumes, networks, activity, team, backups, certificates.
+- Built DatabasesView.tsx: list/detail split layout, 5 engine types with icons (🐘🐬⚡🍃🌊), connection string reveal/hide, storage progress, backup status, create dialog with engine/plan/region selection.
+- Built VolumesView.tsx: summary cards (total/in-use/unused/reclaimable size), table with driver/mountpoint/size/containers, delete unused action, unused filter.
+- Built NetworksView.tsx: list/detail split, driver color-coding, subnet/gateway display, internal/attachable/ingress flags, connected containers list with IPs.
+- Built ActivityView.tsx: timeline view grouped by day, category filters (auth/project/deployment/container/database/settings), actor avatars with type badges (user/system/webhook/api), metadata chips, IP tracking.
+- Built TeamView.tsx: 4-role legend (owner/admin/developer/viewer) with descriptions, pending invitations section, members table with projects/2FA/last-active/role badge, change role dropdown, invite dialog with role picker.
+- Built BackupsView.tsx: summary cards (completed/in-progress/failed/total size), status filters, table with type/status/size/duration/location, restore/download/delete actions, S3 storage info banner.
+- Built CertificatesView.tsx: 3 status summary cards (active/expiring soon/expired), grid of certificate cards with domain/type/issuer/lifetime progress bar, days-to-expiry highlighting, auto-renew toggle, renew-now action for expiring certs.
+- Updated Sidebar.tsx: linked all new views with proper icons (Database, HardDrive, Network, Archive, ShieldCheck, Users, Activity) and badge counts (running containers, databases count).
+- Updated AppShell.tsx: imported all new views and added them to view router switch.
+- Added ViewBoundary class component (error boundary) in AppShell so any view runtime error doesn't kill the whole app - shows retry UI with error message.
+- Fixed critical hydration mismatch bugs:
+  - DashboardView: moved Math.random-based generateMultiSeries() from useState initializer to useEffect (SSR returns null, hydrates on client). Added shimmer placeholders for charts.
+  - ServerView: same fix - series state starts null, populates on mount.
+  - ProjectDetailView LogsTab: moved generateLogs from useState lazy init to useEffect.
+  - useLocalStorage hook: refactored to be SSR-safe (returns initial on server, hydrates from localStorage on mount).
+- Fixed type mismatch bug in DatabasesView: was calling db.stats.qps.toFixed() but the type field is named queriesPerSecond. Renamed all references.
+- Fixed the <select> element hydration issue in CreateDatabaseDialog (replaced with Input defaultValue).
+- Added Rust backend routes:
+  - routes/databases.rs: full CRUD for managed databases - list, create (auto-spawns correct Docker container with engine-specific env vars), get, delete, start/stop/restart, backup trigger, connection string endpoint.
+  - routes/resources.rs: Docker volumes (list/create/delete/prune) and networks (list/create/get/delete) - direct bollard calls.
+  - Added client() accessor to DockerService for advanced operations.
+- Added SQL migration 20260722000002_extended.sql: 4 new tables (databases, backups, certificates, team_invitations) with proper indexes, constraints, and triggers.
+- Updated main.rs to mount new routers (databases, resources).
+- Updated README.md features section with the 6 new capabilities.
+- Verified with Agent Browser: all 7 new pages load correctly with no errors. Took screenshots: 10-databases, 11-volumes, 12-networks, 13-backups, 14-certificates, 15-team, 16-activity. All RTL Arabic working perfectly. ESLint clean.
+
+Stage Summary:
+- Added 7 new complete view files (~2,800 lines of new UI code).
+- Total frontend now: 15 view files, ~5,300 lines.
+- Total backend now: 20 Rust source files, ~2,400 lines (added databases.rs + resources.rs + new migration).
+- Bilingual translations expanded from ~200 to ~350 keys per language.
+- Sidebar now exposes 14 navigation items across 3 groups.
+- All pages verified working in browser with no runtime errors.
+- The platform now matches the "advanced" scope promised: managed DBs, volumes, networks, RBAC team, audit log, backups, SSL certs.

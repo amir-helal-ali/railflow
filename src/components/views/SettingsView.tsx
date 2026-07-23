@@ -211,7 +211,7 @@ function SecurityTab() {
                 </div>
                 <div className="text-end shrink-0">
                   <p className="text-[10px] text-muted-foreground">{t("settings.sessions.lastUsed") || "last active"}</p>
-                  <p className="text-xs">{timeAgo(session.lastActiveAt)}</p>
+                  <p className="text-xs" suppressHydrationWarning>{timeAgo(session.lastActiveAt)}</p>
                 </div>
                 {!session.current && (
                   <Button variant="ghost" size="sm" className="text-rose-400 hover:bg-rose-500/10">

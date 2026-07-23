@@ -19,8 +19,11 @@ import { cn } from "@/lib/utils";
 
 export function ServerView() {
   const { t, locale } = useI18n();
-  const [series, setSeries] = React.useState(generateMultiSeries());
-  const [perCore, setPerCore] = React.useState(mockServerInfo.cpu.perCoreUsage);
+  const [series, setSeries] = React.useState<ReturnType<typeof generateMultiSeries> | null>(null);
+  const [perCore, setPerCore] = React.useState<number[]>(mockServerInfo.cpu.perCoreUsage);
+  React.useEffect(() => {
+    setSeries(generateMultiSeries());
+  }, []);
   useInterval(() => {
     setSeries(generateMultiSeries());
     setPerCore(mockServerInfo.cpu.perCoreUsage.map((v) => Math.max(5, Math.min(95, v + (Math.random() - 0.5) * 10))));
@@ -123,11 +126,13 @@ export function ServerView() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="glass-card p-5">
           <SectionHeader title={`${t("dashboard.cpuUsage")} — ${t("server.history")}`} />
-          <AreaTimeChart series={[series.cpu]} height={200} unit="%" />
+          {series && <AreaTimeChart series={[series.cpu]} height={200} unit="%" />}
+          {!series && <div className="h-[200px] shimmer rounded-lg" />}
         </div>
         <div className="glass-card p-5">
           <SectionHeader title={`${t("dashboard.memoryUsage")} — ${t("server.history")}`} />
-          <AreaTimeChart series={[series.memory]} height={200} unit="%" />
+          {series && <AreaTimeChart series={[series.memory]} height={200} unit="%" />}
+          {!series && <div className="h-[200px] shimmer rounded-lg" />}
         </div>
       </div>
 

@@ -13,8 +13,48 @@ import { ServerView } from "@/components/views/ServerView";
 import { DeploymentsView } from "@/components/views/DeploymentsView";
 import { SettingsView } from "@/components/views/SettingsView";
 import { LoginView } from "@/components/views/LoginView";
+import { DatabasesView } from "@/components/views/DatabasesView";
+import { VolumesView } from "@/components/views/VolumesView";
+import { NetworksView } from "@/components/views/NetworksView";
+import { ActivityView } from "@/components/views/ActivityView";
+import { TeamView } from "@/components/views/TeamView";
+import { BackupsView } from "@/components/views/BackupsView";
+import { CertificatesView } from "@/components/views/CertificatesView";
 import { useLocalStorage } from "@/lib/format";
 import { cn } from "@/lib/utils";
+
+/** Error boundary so a runtime error in one view doesn't kill the whole app. */
+class ViewBoundary extends React.Component<
+  { children: React.ReactNode },
+  { error: Error | null }
+> {
+  state = { error: null as Error | null };
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error("ViewBoundary caught:", error, info.componentStack);
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="glass-card p-8 text-center">
+          <p className="text-sm text-rose-400 mb-2">Error rendering this view</p>
+          <pre className="text-xs text-muted-foreground font-mono overflow-auto max-h-32 text-start bg-white/5 p-3 rounded">
+            {this.state.error.message}
+          </pre>
+          <button
+            onClick={() => this.setState({ error: null })}
+            className="mt-3 px-3 py-1.5 rounded bg-white/5 hover:bg-white/10 text-xs"
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export function AppShell() {
   const { dir } = useI18n();
@@ -58,13 +98,22 @@ export function AppShell() {
         <Topbar onMenuClick={() => setMobileOpen(true)} />
         <main className="p-4 lg:p-6">
           <div className="max-w-[1600px] mx-auto animate-in">
-            {view.name === "dashboard" && <DashboardView />}
-            {view.name === "projects" && <ProjectsView />}
-            {view.name === "project" && <ProjectDetailView projectId={view.projectId} tab={view.tab} />}
-            {view.name === "containers" && <ContainersView />}
-            {view.name === "server" && <ServerView />}
-            {view.name === "deployments" && <DeploymentsView />}
-            {view.name === "settings" && <SettingsView tab={view.tab} />}
+            <ViewBoundary>
+              {view.name === "dashboard" && <DashboardView />}
+              {view.name === "projects" && <ProjectsView />}
+              {view.name === "project" && <ProjectDetailView projectId={view.projectId} tab={view.tab} />}
+              {view.name === "containers" && <ContainersView />}
+              {view.name === "server" && <ServerView />}
+              {view.name === "deployments" && <DeploymentsView />}
+              {view.name === "databases" && <DatabasesView />}
+              {view.name === "volumes" && <VolumesView />}
+              {view.name === "networks" && <NetworksView />}
+              {view.name === "activity" && <ActivityView />}
+              {view.name === "team" && <TeamView />}
+              {view.name === "backups" && <BackupsView />}
+              {view.name === "certificates" && <CertificatesView />}
+              {view.name === "settings" && <SettingsView tab={view.tab} />}
+            </ViewBoundary>
           </div>
         </main>
       </div>

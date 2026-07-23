@@ -280,3 +280,266 @@ export interface TimeSeries {
   unit: string;
   color?: string;
 }
+
+// ----- Managed Databases -----
+export type DatabaseEngine = "postgresql" | "mysql" | "redis" | "mongodb" | "mariadb";
+
+export interface ManagedDatabase {
+  id: string;
+  name: string;
+  engine: DatabaseEngine;
+  version: string;
+  status: "running" | "stopped" | "creating" | "failed";
+  health: Health;
+  region: string;
+  plan: "small" | "medium" | "large" | "xlarge";
+  connectionInfo: {
+    host: string;
+    port: number;
+    database: string;
+    username: string;
+    passwordMasked: string;
+    internalUrl: string;
+    externalUrl?: string;
+  };
+  storage: {
+    usedGb: number;
+    totalGb: number;
+  };
+  stats: {
+    connections: number;
+    maxConnections: number;
+    queriesPerSecond: number;
+    cpuPercent: number;
+    memoryMb: number;
+  };
+  backups: {
+    enabled: boolean;
+    lastBackupAt?: string;
+    nextBackupAt?: string;
+    retention: number; // days
+  };
+  projectId?: string;
+  createdAt: string;
+  containerId: string;
+}
+
+// ----- Docker Volumes -----
+export interface DockerVolume {
+  id: string;
+  name: string;
+  driver: string;
+  mountpoint: string;
+  sizeMb: number;
+  inUse: boolean;
+  containers: string[]; // container names using this volume
+  labels: Record<string, string>;
+  scope: "local" | "global";
+  createdAt: string;
+}
+
+// ----- Docker Networks -----
+export interface DockerNetwork {
+  id: string;
+  name: string;
+  driver: "bridge" | "host" | "overlay" | "macvlan" | "none";
+  scope: "local" | "global" | "swarm";
+  subnet: string;
+  gateway: string;
+  ipAddress?: string;
+  containers: Array<{
+    id: string;
+    name: string;
+    ipv4: string;
+    ipv6?: string;
+  }>;
+  labels: Record<string, string>;
+  createdAt: string;
+  internal: boolean;
+  attachable: boolean;
+  ingress: boolean;
+}
+
+// ----- Activity / Audit Log -----
+export interface ActivityEntry {
+  id: string;
+  timestamp: string;
+  actor: {
+    name: string;
+    avatarUrl: string;
+    type: "user" | "system" | "webhook" | "api";
+  };
+  action: string;
+  category: "auth" | "project" | "deployment" | "container" | "database" | "settings" | "billing";
+  resource: {
+    type: string;
+    id: string;
+    name: string;
+  };
+  metadata?: Record<string, string>;
+  ip?: string;
+  userAgent?: string;
+}
+
+// ----- Team & RBAC -----
+export type Role = "owner" | "admin" | "developer" | "viewer";
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl: string;
+  role: Role;
+  status: "active" | "invited" | "suspended";
+  lastActiveAt?: string;
+  joinedAt: string;
+  twoFactorEnabled: boolean;
+  projectsCount: number;
+  permissions: string[];
+}
+
+export interface TeamInvite {
+  id: string;
+  email: string;
+  role: Role;
+  invitedBy: string;
+  invitedAt: string;
+  expiresAt: string;
+  status: "pending" | "accepted" | "expired";
+}
+
+// ----- Backups -----
+export interface Backup {
+  id: string;
+  projectId?: string;
+  projectName?: string;
+  databaseId?: string;
+  databaseName?: string;
+  type: "automatic" | "manual" | "pre-deploy";
+  status: "in_progress" | "completed" | "failed" | "restoring";
+  sizeMb: number;
+  startedAt: string;
+  finishedAt?: string;
+  durationMs?: number;
+  storageLocation: string;
+  retentionExpiresAt?: string;
+}
+
+// ----- SSL Certificates -----
+export interface Certificate {
+  id: string;
+  domain: string;
+  type: "lets-encrypt" | "custom" | "wildcard";
+  status: "active" | "pending" | "expired" | "renewing";
+  issuer: string;
+  issuedAt: string;
+  expiresAt: string;
+  autoRenew: boolean;
+  projectId?: string;
+  fingerprint: string;
+}
+
+// ----- Deploy Strategies -----
+export type DeployStrategy = "rolling" | "blue-green" | "canary";
+
+export interface DeployStrategyConfig {
+  projectId: string;
+  strategy: DeployStrategy;
+  healthCheckPath: string;
+  healthCheckTimeout: number; // seconds
+  healthCheckInterval: number; // seconds
+  // Blue/green
+  switchAfterHealthySeconds?: number;
+  // Canary
+  canaryPercent?: number;
+  canaryObserveMinutes?: number;
+  rollbackOnError: boolean;
+  rollbackThreshold: number; // error rate %
+}
+
+// ----- Environments -----
+export type EnvironmentTier = "production" | "staging" | "preview";
+
+export interface Environment {
+  id: string;
+  projectId: string;
+  name: string;
+  tier: EnvironmentTier;
+  status: "active" | "sleeping" | "building" | "failed";
+  url?: string;
+  domain?: string;
+  branch: string;
+  commitSha: string;
+  commitMessage: string;
+  lastDeployAt: string;
+  autoScale: boolean;
+  replicas: number;
+  resources: {
+    cpuCores: number;
+    memoryMb: number;
+  };
+  variables: number;
+}
+
+// ----- API Playground -----
+export interface ApiEndpoint {
+  id: string;
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  path: string;
+  description: string;
+  auth: "bearer" | "apikey" | "none";
+  category: "auth" | "projects" | "deployments" | "containers" | "databases" | "server" | "webhooks";
+  sampleRequest: string;
+  sampleResponse: string;
+}
+
+export interface ApiLogEntry {
+  id: string;
+  timestamp: string;
+  method: string;
+  path: string;
+  status: number;
+  durationMs: number;
+  requestSize?: number;
+  responseSize?: number;
+}
+
+// ----- Notifications / Alerts -----
+export type AlertSeverity = "info" | "warning" | "critical";
+export type AlertCategory = "deployment" | "container" | "database" | "server" | "certificate" | "billing" | "security";
+
+export interface Alert {
+  id: string;
+  severity: AlertSeverity;
+  category: AlertCategory;
+  title: string;
+  message: string;
+  timestamp: string;
+  acknowledged: boolean;
+  resolved: boolean;
+  resourceType?: string;
+  resourceId?: string;
+  actions?: Array<{ label: string; type: "primary" | "secondary" | "danger" }>;
+}
+
+export interface NotificationRule {
+  id: string;
+  name: string;
+  enabled: boolean;
+  events: string[];
+  channels: Array<"email" | "slack" | "discord" | "webhook" | "sms">;
+  target: string;
+  createdAt: string;
+}
+
+// ----- Help / Docs Topics -----
+export interface HelpTopic {
+  id: string;
+  title: string;
+  category: "getting-started" | "deployment" | "databases" | "security" | "billing" | "api";
+  icon: string;
+  description: string;
+  readTimeMin: number;
+  lastUpdated: string;
+  content: string;
+}

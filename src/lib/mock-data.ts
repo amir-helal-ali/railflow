@@ -15,6 +15,21 @@ import type {
   LogEntry,
   TimeSeries,
   User,
+  ManagedDatabase,
+  DockerVolume,
+  DockerNetwork,
+  ActivityEntry,
+  TeamMember,
+  TeamInvite,
+  Backup,
+  Certificate,
+  DeployStrategyConfig,
+  Environment,
+  ApiEndpoint,
+  ApiLogEntry,
+  Alert,
+  NotificationRule,
+  HelpTopic,
 } from "./types";
 
 export const mockUser: User = {
@@ -825,3 +840,372 @@ export function generateMultiSeries(): {
     },
   };
 }
+
+// ---------- Managed Databases ----------
+export const mockDatabases: ManagedDatabase[] = [
+  {
+    id: "db_pg",
+    name: "postgres-prod",
+    engine: "postgresql",
+    version: "17.2",
+    status: "running",
+    health: "healthy",
+    region: "fra1",
+    plan: "large",
+    connectionInfo: {
+      host: "postgres-prod.railflow.internal",
+      port: 5432,
+      database: "railflow",
+      username: "railflow",
+      passwordMasked: "••••••••••••",
+      internalUrl: "postgres://railflow:••••@postgres-prod:5432/railflow",
+      externalUrl: "postgres://fra1.db.railflow.io:5432/railflow",
+    },
+    storage: { usedGb: 23.4, totalGb: 100 },
+    stats: { connections: 47, maxConnections: 100, queriesPerSecond: 234.8, cpuPercent: 12.8, memoryMb: 2156 },
+    backups: { enabled: true, lastBackupAt: hourAgo(6), nextBackupAt: hourAgo(-18), retention: 30 },
+    projectId: "p_web",
+    createdAt: dayAgo(245),
+    containerId: "c_pg",
+  },
+  {
+    id: "db_redis",
+    name: "redis-cache",
+    engine: "redis",
+    version: "7.4",
+    status: "running",
+    health: "healthy",
+    region: "fra1",
+    plan: "small",
+    connectionInfo: {
+      host: "redis-cache.railflow.internal",
+      port: 6379,
+      database: "0",
+      username: "default",
+      passwordMasked: "••••••••",
+      internalUrl: "redis://redis-cache:6379/0",
+    },
+    storage: { usedGb: 0.4, totalGb: 2 },
+    stats: { connections: 18, maxConnections: 1000, queriesPerSecond: 1284.3, cpuPercent: 1.2, memoryMb: 89 },
+    backups: { enabled: true, lastBackupAt: hourAgo(12), nextBackupAt: hourAgo(-12), retention: 7 },
+    projectId: "p_api",
+    createdAt: dayAgo(120),
+    containerId: "c_redis",
+  },
+  {
+    id: "db_pg_workers",
+    name: "workers-db",
+    engine: "postgresql",
+    version: "17.2",
+    status: "running",
+    health: "healthy",
+    region: "fra1",
+    plan: "medium",
+    connectionInfo: {
+      host: "workers-db.railflow.internal",
+      port: 5432,
+      database: "workers",
+      username: "railflow",
+      passwordMasked: "••••••••",
+      internalUrl: "postgres://railflow:••••@workers-db:5432/workers",
+    },
+    storage: { usedGb: 4.2, totalGb: 50 },
+    stats: { connections: 12, maxConnections: 50, queriesPerSecond: 47.3, cpuPercent: 3.4, memoryMb: 412 },
+    backups: { enabled: true, lastBackupAt: hourAgo(6), nextBackupAt: hourAgo(-18), retention: 14 },
+    projectId: "p_worker",
+    createdAt: dayAgo(188),
+    containerId: "c_pg_workers",
+  },
+  {
+    id: "db_mongo",
+    name: "ml-storage",
+    engine: "mongodb",
+    version: "7.0",
+    status: "running",
+    health: "degraded",
+    region: "fra1",
+    plan: "xlarge",
+    connectionInfo: {
+      host: "ml-storage.railflow.internal",
+      port: 27017,
+      database: "ml_data",
+      username: "railflow",
+      passwordMasked: "••••••••••",
+      internalUrl: "mongodb://railflow:••••@ml-storage:27017/ml_data",
+    },
+    storage: { usedGb: 412.8, totalGb: 500 },
+    stats: { connections: 32, maxConnections: 200, queriesPerSecond: 87.4, cpuPercent: 34.2, memoryMb: 4128 },
+    backups: { enabled: false, retention: 0 },
+    projectId: "p_ml",
+    createdAt: dayAgo(64),
+    containerId: "c_mongo",
+  },
+  {
+    id: "db_mysql",
+    name: "legacy-mysql",
+    engine: "mysql",
+    version: "8.4",
+    status: "stopped",
+    health: "unknown",
+    region: "fra1",
+    plan: "small",
+    connectionInfo: {
+      host: "legacy-mysql.railflow.internal",
+      port: 3306,
+      database: "legacy",
+      username: "root",
+      passwordMasked: "••••••••",
+      internalUrl: "mysql://root:••••@legacy-mysql:3306/legacy",
+    },
+    storage: { usedGb: 1.8, totalGb: 10 },
+    stats: { connections: 0, maxConnections: 100, queriesPerSecond: 0, cpuPercent: 0, memoryMb: 0 },
+    backups: { enabled: true, lastBackupAt: dayAgo(3), retention: 30 },
+    createdAt: dayAgo(312),
+    containerId: "c_mysql",
+  },
+];
+
+// ---------- Docker Volumes ----------
+export const mockVolumes: DockerVolume[] = [
+  { id: "v_pg_data", name: "postgres-data", driver: "local", mountpoint: "/var/lib/docker/volumes/postgres-data/_data", sizeMb: 23400, inUse: true, containers: ["postgres-prod"], labels: { "railflow.managed": "true" }, scope: "local", createdAt: dayAgo(245) },
+  { id: "v_redis_data", name: "redis-data", driver: "local", mountpoint: "/var/lib/docker/volumes/redis-data/_data", sizeMb: 412, inUse: true, containers: ["redis-cache"], labels: { "railflow.managed": "true" }, scope: "local", createdAt: dayAgo(120) },
+  { id: "v_ml_models", name: "ml-models", driver: "local", mountpoint: "/var/lib/docker/volumes/ml-models/_data", sizeMb: 89400, inUse: true, containers: ["ml-inference-prod"], labels: { "railflow.project": "p_ml" }, scope: "local", createdAt: dayAgo(64) },
+  { id: "v_workers_db", name: "workers-db-data", driver: "local", mountpoint: "/var/lib/docker/volumes/workers-db-data/_data", sizeMb: 4200, inUse: true, containers: ["workers-db"], labels: { "railflow.managed": "true" }, scope: "local", createdAt: dayAgo(188) },
+  { id: "v_nginx_logs", name: "nginx-logs", driver: "local", mountpoint: "/var/lib/docker/volumes/nginx-logs/_data", sizeMb: 124, inUse: true, containers: ["edge-proxy"], labels: {}, scope: "local", createdAt: dayAgo(120) },
+  { id: "v_mongo_data", name: "mongo-data", driver: "local", mountpoint: "/var/lib/docker/volumes/mongo-data/_data", sizeMb: 412800, inUse: true, containers: ["ml-storage"], labels: { "railflow.managed": "true" }, scope: "local", createdAt: dayAgo(64) },
+  { id: "v_old_backup", name: "old-backup-2024", driver: "local", mountpoint: "/var/lib/docker/volumes/old-backup-2024/_data", sizeMb: 8920, inUse: false, containers: [], labels: {}, scope: "local", createdAt: dayAgo(356) },
+  { id: "v_grafana", name: "grafana-data", driver: "local", mountpoint: "/var/lib/docker/volumes/grafana-data/_data", sizeMb: 312, inUse: true, containers: ["grafana-server"], labels: {}, scope: "local", createdAt: dayAgo(45) },
+];
+
+// ---------- Docker Networks ----------
+export const mockNetworks: DockerNetwork[] = [
+  {
+    id: "n_railflow",
+    name: "railflow-net",
+    driver: "bridge",
+    scope: "local",
+    subnet: "172.20.0.0/16",
+    gateway: "172.20.0.1",
+    containers: [
+      { id: "c_web_1", name: "web-platform-prod", ipv4: "172.20.0.2" },
+      { id: "c_api_1", name: "api-gateway-prod", ipv4: "172.20.0.3" },
+      { id: "c_worker_1", name: "workers-prod", ipv4: "172.20.0.4" },
+      { id: "c_ml_1", name: "ml-inference-prod", ipv4: "172.20.0.5" },
+      { id: "c_docs_1", name: "docs-prod", ipv4: "172.20.0.6" },
+      { id: "c_pg", name: "postgres-prod", ipv4: "172.20.0.10" },
+      { id: "c_redis", name: "redis-cache", ipv4: "172.20.0.11" },
+    ],
+    labels: { "railflow.managed": "true" },
+    createdAt: dayAgo(245),
+    internal: false,
+    attachable: true,
+    ingress: false,
+  },
+  {
+    id: "n_edge",
+    name: "railflow-edge",
+    driver: "bridge",
+    scope: "local",
+    subnet: "172.21.0.0/16",
+    gateway: "172.21.0.1",
+    containers: [
+      { id: "c_nginx", name: "edge-proxy", ipv4: "172.21.0.2" },
+    ],
+    labels: {},
+    createdAt: dayAgo(120),
+    internal: false,
+    attachable: false,
+    ingress: true,
+  },
+  {
+    id: "n_ml",
+    name: "ml-internal",
+    driver: "bridge",
+    scope: "local",
+    subnet: "172.22.0.0/16",
+    gateway: "172.22.0.1",
+    containers: [
+      { id: "c_ml_1", name: "ml-inference-prod", ipv4: "172.22.0.2" },
+      { id: "c_mongo", name: "ml-storage", ipv4: "172.22.0.3" },
+    ],
+    labels: { "railflow.project": "p_ml" },
+    createdAt: dayAgo(64),
+    internal: true,
+    attachable: true,
+    ingress: false,
+  },
+  {
+    id: "n_host",
+    name: "host",
+    driver: "host",
+    scope: "local",
+    subnet: "—",
+    gateway: "—",
+    containers: [],
+    labels: {},
+    createdAt: dayAgo(456),
+    internal: false,
+    attachable: false,
+    ingress: false,
+  },
+  {
+    id: "n_none",
+    name: "none",
+    driver: "none",
+    scope: "local",
+    subnet: "—",
+    gateway: "—",
+    containers: [],
+    labels: {},
+    createdAt: dayAgo(456),
+    internal: true,
+    attachable: false,
+    ingress: false,
+  },
+];
+
+// ---------- Activity Log ----------
+export const mockActivity: ActivityEntry[] = [
+  { id: "a_1", timestamp: minAgo(2), actor: { name: "Ahmed Hassan", avatarUrl: "https://i.pravatar.cc/40?img=12", type: "user" }, action: "triggered deployment", category: "deployment", resource: { type: "project", id: "p_ml", name: "ML Inference" }, metadata: { commit: "d9c1e2a", branch: "main" }, ip: "156.21x.x.x" },
+  { id: "a_2", timestamp: minAgo(14), actor: { name: "GitHub Webhook", avatarUrl: "", type: "webhook" }, action: "auto-deployed", category: "deployment", resource: { type: "project", id: "p_web", name: "Web Platform" }, metadata: { commit: "a3f5c2e", branch: "main", author: "Sara Mohamed" } },
+  { id: "a_3", timestamp: minAgo(47), actor: { name: "Sara Mohamed", avatarUrl: "https://i.pravatar.cc/40?img=5", type: "user" }, action: "added environment variable", category: "project", resource: { type: "project", id: "p_web", name: "Web Platform" }, metadata: { key: "SENTRY_DSN", secret: "true" }, ip: "156.21x.x.x" },
+  { id: "a_4", timestamp: hourAgo(2), actor: { name: "Ahmed Hassan", avatarUrl: "https://i.pravatar.cc/40?img=12", type: "user" }, action: "stopped container", category: "container", resource: { type: "container", id: "c_old_mobile", name: "mobile-api-staging" }, ip: "156.21x.x.x" },
+  { id: "a_5", timestamp: hourAgo(3), actor: { name: "GitHub Webhook", avatarUrl: "", type: "webhook" }, action: "auto-deployed", category: "deployment", resource: { type: "project", id: "p_api", name: "API Gateway" }, metadata: { commit: "b7e9d1f", branch: "main", author: "Omar Khaled" } },
+  { id: "a_6", timestamp: hourAgo(5), actor: { name: "Omar Khaled", avatarUrl: "https://i.pravatar.cc/40?img=8", type: "user" }, action: "updated build settings", category: "project", resource: { type: "project", id: "p_api", name: "API Gateway" }, metadata: { field: "build_command" }, ip: "10.0.x.x" },
+  { id: "a_7", timestamp: hourAgo(6), actor: { name: "System", avatarUrl: "", type: "system" }, action: "completed backup", category: "database", resource: { type: "database", id: "db_pg", name: "postgres-prod" }, metadata: { size_mb: "23400", duration_ms: "47200" } },
+  { id: "a_8", timestamp: hourAgo(8), actor: { name: "Layla Ibrahim", avatarUrl: "https://i.pravatar.cc/40?img=20", type: "user" }, action: "deployment failed", category: "deployment", resource: { type: "project", id: "p_mobile", name: "Mobile API" }, metadata: { error: "Build failed", commit: "f8a3d9e" }, ip: "197.43.x.x" },
+  { id: "a_9", timestamp: hourAgo(11), actor: { name: "GitHub Webhook", avatarUrl: "", type: "webhook" }, action: "auto-deployed", category: "deployment", resource: { type: "project", id: "p_worker", name: "Background Workers" }, metadata: { commit: "c2a8f3b", branch: "main", author: "Yusuf Ali" } },
+  { id: "a_10", timestamp: hourAgo(20), actor: { name: "Sara Mohamed", avatarUrl: "https://i.pravatar.cc/40?img=5", type: "user" }, action: "created API key", category: "settings", resource: { type: "api_key", id: "k_1", name: "CI/CD Pipeline" }, ip: "156.21x.x.x" },
+  { id: "a_11", timestamp: dayAgo(1), actor: { name: "Yusuf Ali", avatarUrl: "https://i.pravatar.cc/40?img=15", type: "user" }, action: "joined team", category: "settings", resource: { type: "team", id: "u_yusuf", name: "Yusuf Ali" }, ip: "156.21x.x.x" },
+  { id: "a_12", timestamp: dayAgo(2), actor: { name: "GitHub Webhook", avatarUrl: "", type: "webhook" }, action: "auto-deployed", category: "deployment", resource: { type: "project", id: "p_docs", name: "Documentation" }, metadata: { commit: "e5b2c4d", branch: "main" } },
+  { id: "a_13", timestamp: dayAgo(3), actor: { name: "Ahmed Hassan", avatarUrl: "https://i.pravatar.cc/40?img=12", type: "user" }, action: "enabled 2FA", category: "auth", resource: { type: "user", id: "u_1", name: "Ahmed Hassan" }, ip: "156.21x.x.x" },
+  { id: "a_14", timestamp: dayAgo(5), actor: { name: "System", avatarUrl: "", type: "system" }, action: "SSL certificate renewed", category: "settings", resource: { type: "certificate", id: "cert_1", name: "railflow.io" }, metadata: { issuer: "Let's Encrypt" } },
+  { id: "a_15", timestamp: dayAgo(7), actor: { name: "Omar Khaled", avatarUrl: "https://i.pravatar.cc/40?img=8", type: "user" }, action: "deleted project", category: "project", resource: { type: "project", id: "p_old_legacy", name: "Legacy Backend" }, ip: "10.0.x.x" },
+];
+
+// ---------- Team Members ----------
+export const mockTeam: TeamMember[] = [
+  { id: "u_1", name: "Ahmed Hassan", email: "ahmed@railflow.io", avatarUrl: "https://i.pravatar.cc/100?img=12", role: "owner", status: "active", lastActiveAt: minAgo(0), joinedAt: dayAgo(245), twoFactorEnabled: true, projectsCount: 6, permissions: ["*"] },
+  { id: "u_2", name: "Sara Mohamed", email: "sara@railflow.io", avatarUrl: "https://i.pravatar.cc/100?img=5", role: "admin", status: "active", lastActiveAt: minAgo(14), joinedAt: dayAgo(180), twoFactorEnabled: true, projectsCount: 3, permissions: ["project:*", "deploy:*", "container:*"] },
+  { id: "u_3", name: "Omar Khaled", email: "omar@railflow.io", avatarUrl: "https://i.pravatar.cc/100?img=8", role: "developer", status: "active", lastActiveAt: hourAgo(3), joinedAt: dayAgo(89), twoFactorEnabled: true, projectsCount: 2, permissions: ["project:read", "project:write", "deploy:create"] },
+  { id: "u_4", name: "Layla Ibrahim", email: "layla@railflow.io", avatarUrl: "https://i.pravatar.cc/100?img=20", role: "developer", status: "active", lastActiveAt: hourAgo(8), joinedAt: dayAgo(45), twoFactorEnabled: false, projectsCount: 1, permissions: ["project:read", "project:write", "deploy:create"] },
+  { id: "u_5", name: "Yusuf Ali", email: "yusuf@railflow.io", avatarUrl: "https://i.pravatar.cc/100?img=15", role: "developer", status: "active", lastActiveAt: hourAgo(11), joinedAt: dayAgo(1), twoFactorEnabled: true, projectsCount: 1, permissions: ["project:read", "project:write", "deploy:create"] },
+  { id: "u_6", name: "Mariam Saleh", email: "mariam@railflow.io", avatarUrl: "https://i.pravatar.cc/100?img=32", role: "viewer", status: "active", lastActiveAt: dayAgo(2), joinedAt: dayAgo(60), twoFactorEnabled: false, projectsCount: 0, permissions: ["project:read", "metrics:read"] },
+  { id: "u_7", name: "Khalid Nasser", email: "khalid@external.com", avatarUrl: "https://i.pravatar.cc/100?img=24", role: "viewer", status: "invited", joinedAt: dayAgo(1), twoFactorEnabled: false, projectsCount: 0, permissions: ["project:read"] },
+];
+
+export const mockInvites: TeamInvite[] = [
+  { id: "inv_1", email: "khalid@external.com", role: "viewer", invitedBy: "Ahmed Hassan", invitedAt: dayAgo(1), expiresAt: dayAgo(-6), status: "pending" },
+  { id: "inv_2", email: "intern@railflow.io", role: "viewer", invitedBy: "Sara Mohamed", invitedAt: dayAgo(2), expiresAt: dayAgo(-5), status: "pending" },
+];
+
+// ---------- Backups ----------
+export const mockBackups: Backup[] = [
+  { id: "b_1", databaseId: "db_pg", databaseName: "postgres-prod", type: "automatic", status: "completed", sizeMb: 23400, startedAt: hourAgo(6), finishedAt: hourAgo(6), durationMs: 47200, storageLocation: "s3://railflow-backups/postgres-prod/2026-07-22/", retentionExpiresAt: dayAgo(-24) },
+  { id: "b_2", databaseId: "db_redis", databaseName: "redis-cache", type: "automatic", status: "completed", sizeMb: 412, startedAt: hourAgo(12), finishedAt: hourAgo(12), durationMs: 12400, storageLocation: "s3://railflow-backups/redis-cache/2026-07-22/", retentionExpiresAt: dayAgo(-5) },
+  { id: "b_3", databaseId: "db_pg_workers", databaseName: "workers-db", type: "automatic", status: "completed", sizeMb: 4200, startedAt: hourAgo(6), finishedAt: hourAgo(6), durationMs: 8900, storageLocation: "s3://railflow-backups/workers-db/2026-07-22/", retentionExpiresAt: dayAgo(-8) },
+  { id: "b_4", projectId: "p_web", projectName: "Web Platform", type: "pre-deploy", status: "completed", sizeMb: 89, startedAt: minAgo(14), finishedAt: minAgo(13), durationMs: 47800, storageLocation: "local:/backups/web-platform/", retentionExpiresAt: dayAgo(-3) },
+  { id: "b_5", databaseId: "db_pg", databaseName: "postgres-prod", type: "automatic", status: "in_progress", sizeMb: 0, startedAt: minAgo(2), storageLocation: "s3://railflow-backups/postgres-prod/2026-07-22-2/" },
+  { id: "b_6", databaseId: "db_pg", databaseName: "postgres-prod", type: "manual", status: "completed", sizeMb: 22800, startedAt: dayAgo(1), finishedAt: dayAgo(1), durationMs: 45200, storageLocation: "s3://railflow-backups/postgres-prod/2026-07-21/", retentionExpiresAt: dayAgo(-29) },
+  { id: "b_7", projectId: "p_mobile", projectName: "Mobile API", type: "pre-deploy", status: "failed", sizeMb: 0, startedAt: hourAgo(8), finishedAt: hourAgo(8), durationMs: 2100, storageLocation: "—" },
+];
+
+// ---------- SSL Certificates ----------
+export const mockCertificates: Certificate[] = [
+  { id: "cert_1", domain: "railflow.io", type: "lets-encrypt", status: "active", issuer: "Let's Encrypt R3", issuedAt: dayAgo(45), expiresAt: dayAgo(-45), autoRenew: true, projectId: "p_web", fingerprint: "a3f5c2e8b9d1e4f7" },
+  { id: "cert_2", domain: "api.railflow.io", type: "lets-encrypt", status: "active", issuer: "Let's Encrypt R3", issuedAt: dayAgo(45), expiresAt: dayAgo(-45), autoRenew: true, projectId: "p_api", fingerprint: "b7e9d1f5a2c8e3d6" },
+  { id: "cert_3", domain: "docs.railflow.io", type: "lets-encrypt", status: "active", issuer: "Let's Encrypt R3", issuedAt: dayAgo(30), expiresAt: dayAgo(-60), autoRenew: true, projectId: "p_docs", fingerprint: "e5b2c4d8f1a7b9e2" },
+  { id: "cert_4", domain: "infer.railflow.io", type: "lets-encrypt", status: "active", issuer: "Let's Encrypt R3", issuedAt: dayAgo(60), expiresAt: dayAgo(-30), autoRenew: true, projectId: "p_ml", fingerprint: "d9c1e2a5b7f3c8d4" },
+  { id: "cert_5", domain: "*.preview.railflow.app", type: "wildcard", status: "active", issuer: "Let's Encrypt R3", issuedAt: dayAgo(15), expiresAt: dayAgo(-75), autoRenew: true, fingerprint: "f8a3d9e1c2b4e5a7" },
+  { id: "cert_6", domain: "m.railflow.io", type: "lets-encrypt", status: "expired", issuer: "Let's Encrypt R3", issuedAt: dayAgo(95), expiresAt: dayAgo(5), autoRenew: false, projectId: "p_mobile", fingerprint: "c2a8f3b6d9e1a4c8" },
+  { id: "cert_7", domain: "staging.railflow.io", type: "custom", status: "renewing", issuer: "DigiCert Inc", issuedAt: dayAgo(80), expiresAt: dayAgo(10), autoRenew: true, fingerprint: "9f2b1c8a4d3e7b2f" },
+];
+
+// ---------- Deploy Strategy Configs ----------
+export const mockDeployStrategies: DeployStrategyConfig[] = [
+  { projectId: "p_web", strategy: "blue-green", healthCheckPath: "/api/health", healthCheckTimeout: 30, healthCheckInterval: 10, switchAfterHealthySeconds: 60, rollbackOnError: true, rollbackThreshold: 5 },
+  { projectId: "p_api", strategy: "canary", healthCheckPath: "/health", healthCheckTimeout: 15, healthCheckInterval: 5, canaryPercent: 10, canaryObserveMinutes: 15, rollbackOnError: true, rollbackThreshold: 2 },
+  { projectId: "p_worker", strategy: "rolling", healthCheckPath: "/healthz", healthCheckTimeout: 20, healthCheckInterval: 10, rollbackOnError: false, rollbackThreshold: 10 },
+  { projectId: "p_ml", strategy: "canary", healthCheckPath: "/health", healthCheckTimeout: 45, healthCheckInterval: 15, canaryPercent: 5, canaryObserveMinutes: 30, rollbackOnError: true, rollbackThreshold: 1 },
+  { projectId: "p_docs", strategy: "rolling", healthCheckPath: "/", healthCheckTimeout: 10, healthCheckInterval: 5, rollbackOnError: false, rollbackThreshold: 20 },
+  { projectId: "p_mobile", strategy: "rolling", healthCheckPath: "/health", healthCheckTimeout: 20, healthCheckInterval: 10, rollbackOnError: true, rollbackThreshold: 5 },
+];
+
+// ---------- Environments ----------
+export const mockEnvironments: Environment[] = [
+  { id: "env_web_prod", projectId: "p_web", name: "Production", tier: "production", status: "active", url: "https://railflow.io", domain: "railflow.io", branch: "main", commitSha: "a3f5c2e", commitMessage: "feat: ship onboarding v2 with RTL support", lastDeployAt: minAgo(14), autoScale: true, replicas: 3, resources: { cpuCores: 2, memoryMb: 2048 }, variables: 24 },
+  { id: "env_web_staging", projectId: "p_web", name: "Staging", tier: "staging", status: "active", url: "https://staging.railflow.io", domain: "staging.railflow.io", branch: "develop", commitSha: "9f2b1c8", commitMessage: "fix: dark mode toggle persists", lastDeployAt: hourAgo(20), autoScale: false, replicas: 1, resources: { cpuCores: 1, memoryMb: 1024 }, variables: 18 },
+  { id: "env_web_pr_42", projectId: "p_web", name: "PR #42 — Login redesign", tier: "preview", status: "active", url: "https://pr-42-preview.railflow.app", branch: "feat/login-redesign", commitSha: "8a7d2b3", commitMessage: "wip: new login form", lastDeployAt: hourAgo(2), autoScale: false, replicas: 1, resources: { cpuCores: 0.5, memoryMb: 512 }, variables: 16 },
+  { id: "env_api_prod", projectId: "p_api", name: "Production", tier: "production", status: "active", url: "https://api.railflow.io", domain: "api.railflow.io", branch: "main", commitSha: "b7e9d1f", commitMessage: "perf: reduce p99 latency by 22%", lastDeployAt: hourAgo(3), autoScale: true, replicas: 5, resources: { cpuCores: 4, memoryMb: 4096 }, variables: 18 },
+  { id: "env_api_staging", projectId: "p_api", name: "Staging", tier: "staging", status: "sleeping", url: "https://staging-api.railflow.io", branch: "develop", commitSha: "5e2c1a9", commitMessage: "test: add integration tests for auth", lastDeployAt: dayAgo(2), autoScale: false, replicas: 1, resources: { cpuCores: 1, memoryMb: 1024 }, variables: 14 },
+  { id: "env_ml_prod", projectId: "p_ml", name: "Production", tier: "production", status: "building", url: "https://infer.railflow.io", domain: "infer.railflow.io", branch: "main", commitSha: "d9c1e2a", commitMessage: "chore: upgrade onnxruntime", lastDeployAt: minAgo(3), autoScale: true, replicas: 2, resources: { cpuCores: 8, memoryMb: 8192 }, variables: 9 },
+  { id: "env_worker_prod", projectId: "p_worker", name: "Production", tier: "production", status: "active", branch: "main", commitSha: "c2a8f3b", commitMessage: "fix: dead-letter queue retries", lastDeployAt: hourAgo(11), autoScale: true, replicas: 4, resources: { cpuCores: 1, memoryMb: 1024 }, variables: 14 },
+  { id: "env_docs_prod", projectId: "p_docs", name: "Production", tier: "production", status: "active", url: "https://docs.railflow.io", domain: "docs.railflow.io", branch: "main", commitSha: "e5b2c4d", commitMessage: "docs: add Rust backend architecture", lastDeployAt: dayAgo(2), autoScale: false, replicas: 1, resources: { cpuCores: 0.5, memoryMb: 512 }, variables: 4 },
+  { id: "env_mobile_staging", projectId: "p_mobile", name: "Staging", tier: "staging", status: "failed", url: "https://staging-m.railflow.io", branch: "develop", commitSha: "f8a3d9e", commitMessage: "wip: push notifications", lastDeployAt: hourAgo(8), autoScale: false, replicas: 1, resources: { cpuCores: 2, memoryMb: 2048 }, variables: 16 },
+];
+
+// ---------- API Endpoints ----------
+export const mockApiEndpoints: ApiEndpoint[] = [
+  { id: "ep_1", method: "POST", path: "/api/auth/login", description: "Authenticate user with email + password", auth: "none", category: "auth", sampleRequest: `{\n  "email": "user@example.com",\n  "password": "secret"\n}`, sampleResponse: `{\n  "requires_2fa": false,\n  "access_token": "eyJhbGc...",\n  "user": { "id": "u_1", "email": "user@example.com" }\n}` },
+  { id: "ep_2", method: "POST", path: "/api/auth/verify-2fa", description: "Verify TOTP 6-digit code", auth: "none", category: "auth", sampleRequest: `{\n  "session_token": "abc-123",\n  "code": "123456"\n}`, sampleResponse: `{\n  "access_token": "eyJhbGc...",\n  "user": { ... }\n}` },
+  { id: "ep_3", method: "GET", path: "/api/auth/me", description: "Get current authenticated user", auth: "bearer", category: "auth", sampleRequest: `// Headers:\nAuthorization: Bearer <token>`, sampleResponse: `{\n  "id": "u_1",\n  "email": "ahmed@railflow.io",\n  "role": "owner",\n  "two_factor_enabled": true\n}` },
+  { id: "ep_4", method: "GET", path: "/api/projects", description: "List all projects", auth: "bearer", category: "projects", sampleRequest: `// Headers:\nAuthorization: Bearer <token>`, sampleResponse: `[\n  { "id": "p_web", "name": "Web Platform", "status": "done" },\n  { "id": "p_api", "name": "API Gateway", "status": "done" }\n]` },
+  { id: "ep_5", method: "POST", path: "/api/projects", description: "Create a new project from a GitHub repo", auth: "bearer", category: "projects", sampleRequest: `{\n  "name": "my-app",\n  "repo": "owner/repo",\n  "branch": "main",\n  "runtime": "node",\n  "build_command": "npm run build",\n  "start_command": "npm start"\n}`, sampleResponse: `{\n  "id": "p_new",\n  "name": "my-app",\n  "status": "queued"\n}` },
+  { id: "ep_6", method: "POST", path: "/api/projects/:id/deploy", description: "Trigger a new deployment", auth: "bearer", category: "deployments", sampleRequest: `{\n  "project_id": "p_web",\n  "environment": "production"\n}`, sampleResponse: `{\n  "deployment_id": "d_new",\n  "status": "queued"\n}` },
+  { id: "ep_7", method: "GET", path: "/api/containers", description: "List all Docker containers", auth: "bearer", category: "containers", sampleRequest: `?all=true  // include stopped`, sampleResponse: `[\n  { "id": "c_web_1", "name": "web-platform-prod", "status": "running" }\n]` },
+  { id: "ep_8", method: "POST", path: "/api/containers/:id/restart", description: "Restart a container", auth: "bearer", category: "containers", sampleRequest: `{}`, sampleResponse: `{ "restarted": true, "id": "c_web_1" }` },
+  { id: "ep_9", method: "GET", path: "/api/databases", description: "List managed databases", auth: "bearer", category: "databases", sampleRequest: `// Headers:\nAuthorization: Bearer <token>`, sampleResponse: `[\n  { "id": "db_pg", "name": "postgres-prod", "engine": "postgresql", "status": "running" }\n]` },
+  { id: "ep_10", method: "GET", path: "/api/server/info", description: "Get live server metrics (CPU, RAM, disk, network)", auth: "bearer", category: "server", sampleRequest: `// Headers:\nAuthorization: Bearer <token>`, sampleResponse: `{\n  "hostname": "railflow-prod-01",\n  "cpu": { "overall_usage": 46.9, "cores": 16 },\n  "memory": { "used_gb": 28.4, "total_gb": 64 }\n}` },
+  { id: "ep_11", method: "POST", path: "/api/webhooks/github", description: "GitHub webhook receiver (auto-deploy on push)", auth: "none", category: "webhooks", sampleRequest: `// Headers:\nX-Hub-Signature-256: sha256=...\nX-GitHub-Event: push\n\n// Body: GitHub push event payload`, sampleResponse: `{ "received": true }` },
+  { id: "ep_12", method: "DELETE", path: "/api/projects/:id", description: "Delete project and stop its container", auth: "bearer", category: "projects", sampleRequest: `// Headers:\nAuthorization: Bearer <token>`, sampleResponse: `{ "deleted": true }` },
+];
+
+export const mockApiLog: ApiLogEntry[] = [
+  { id: "al_1", timestamp: minAgo(0.2), method: "GET", path: "/api/server/info", status: 200, durationMs: 12, responseSize: 1247 },
+  { id: "al_2", timestamp: minAgo(0.5), method: "POST", path: "/api/auth/login", status: 200, durationMs: 89, requestSize: 64, responseSize: 412 },
+  { id: "al_3", timestamp: minAgo(1), method: "GET", path: "/api/projects", status: 200, durationMs: 23, responseSize: 4823 },
+  { id: "al_4", timestamp: minAgo(2), method: "POST", path: "/api/projects/p_ml/deploy", status: 201, durationMs: 124, requestSize: 48 },
+  { id: "al_5", timestamp: minAgo(3), method: "GET", path: "/api/containers", status: 200, durationMs: 18, responseSize: 3421 },
+  { id: "al_6", timestamp: minAgo(4), method: "POST", path: "/api/containers/c_old_mobile/stop", status: 200, durationMs: 1247, responseSize: 28 },
+  { id: "al_7", timestamp: minAgo(5), method: "GET", path: "/api/databases", status: 200, durationMs: 15, responseSize: 2847 },
+  { id: "al_8", timestamp: minAgo(6), method: "POST", path: "/api/webhooks/github", status: 200, durationMs: 8, requestSize: 4823, responseSize: 24 },
+  { id: "al_9", timestamp: minAgo(8), method: "DELETE", path: "/api/projects/p_old_legacy", status: 200, durationMs: 234, responseSize: 24 },
+  { id: "al_10", timestamp: minAgo(10), method: "GET", path: "/api/deployments", status: 200, durationMs: 17, responseSize: 6234 },
+  { id: "al_11", timestamp: minAgo(12), method: "POST", path: "/api/auth/verify-2fa", status: 401, durationMs: 12, requestSize: 48 },
+  { id: "al_12", timestamp: minAgo(14), method: "GET", path: "/api/server/processes", status: 200, durationMs: 28, responseSize: 4128 },
+];
+
+// ---------- Alerts ----------
+export const mockAlerts: Alert[] = [
+  { id: "al_1", severity: "critical", category: "deployment", title: "Deployment failed: Mobile API", message: "Build failed — Cannot find module '@notifee/react-native' in src/push.ts:14:23. Stage: building. Auto-rollback initiated.", timestamp: hourAgo(8), acknowledged: false, resolved: false, resourceType: "project", resourceId: "p_mobile", actions: [{ label: "View logs", type: "primary" }, { label: "Retry", type: "secondary" }] },
+  { id: "al_2", severity: "warning", category: "container", title: "High memory usage: ml-inference-prod", message: "Container ml-inference-prod is using 64% of memory (5234 MB / 8192 MB). Sustained for 12 minutes.", timestamp: hourAgo(1), acknowledged: false, resolved: false, resourceType: "container", resourceId: "c_ml_1", actions: [{ label: "Scale up", type: "primary" }] },
+  { id: "al_3", severity: "warning", category: "certificate", title: "SSL certificate expiring soon", message: "m.railflow.io certificate expires in 5 days. Auto-renew is disabled.", timestamp: hourAgo(2), acknowledged: true, resolved: false, resourceType: "certificate", resourceId: "cert_6", actions: [{ label: "Renew now", type: "primary" }] },
+  { id: "al_4", severity: "info", category: "deployment", title: "Deployment succeeded: API Gateway", message: "API Gateway deployed to production in 145s. Commit b7e9d1f is now live at api.railflow.io.", timestamp: hourAgo(3), acknowledged: true, resolved: true, resourceType: "project", resourceId: "p_api" },
+  { id: "al_5", severity: "critical", category: "database", title: "Database backup failed: ml-storage", message: "Automatic backup of ml-storage (MongoDB) failed: connection timeout. Backups are disabled for this database.", timestamp: hourAgo(5), acknowledged: false, resolved: false, resourceType: "database", resourceId: "db_mongo", actions: [{ label: "Enable backups", type: "primary" }, { label: "Run manually", type: "secondary" }] },
+  { id: "al_6", severity: "warning", category: "server", title: "Disk usage high: /var/lib/docker", message: "Docker volume partition at 46.8% (234 GB / 500 GB). Trending upward — projected to fill in 18 days.", timestamp: hourAgo(6), acknowledged: true, resolved: false, resourceType: "server", resourceId: "disk" },
+  { id: "al_7", severity: "info", category: "security", title: "New login from unrecognized device", message: "Login from IP 197.43.x.x (Alexandria, EG) — Linux/Firefox. If this wasn't you, revoke the session.", timestamp: hourAgo(20), acknowledged: true, resolved: true, resourceType: "session", resourceId: "s_4" },
+  { id: "al_8", severity: "info", category: "deployment", title: "PR preview deployed: PR #42", message: "Preview for PR #42 (Login redesign) is now live at https://pr-42-preview.railflow.app", timestamp: hourAgo(2), acknowledged: false, resolved: true, resourceType: "project", resourceId: "p_web" },
+  { id: "al_9", severity: "warning", category: "billing", title: "Approaching plan limits", message: "You're using 12/50 containers (24%). At current growth, you'll exceed the plan in 7 days.", timestamp: dayAgo(1), acknowledged: false, resolved: false, resourceType: "billing", resourceId: "plan", actions: [{ label: "Upgrade plan", type: "primary" }] },
+  { id: "al_10", severity: "critical", category: "container", title: "Container unhealthy: mobile-api-staging", message: "Container mobile-api-staging became unhealthy after 3 failed health checks. Auto-stopped.", timestamp: hourAgo(8), acknowledged: true, resolved: false, resourceType: "container", resourceId: "c_old_mobile", actions: [{ label: "View logs", type: "primary" }] },
+];
+
+export const mockNotificationRules: NotificationRule[] = [
+  { id: "nr_1", name: "Failed deployments", enabled: true, events: ["deployment.failed", "deployment.rolled_back"], channels: ["email", "slack"], target: "#deploys", createdAt: dayAgo(89) },
+  { id: "nr_2", name: "Critical alerts", enabled: true, events: ["alert.critical"], channels: ["email", "sms", "slack"], target: "#alerts", createdAt: dayAgo(120) },
+  { id: "nr_3", name: "Successful deploys", enabled: false, events: ["deployment.success"], channels: ["slack"], target: "#deploys", createdAt: dayAgo(60) },
+  { id: "nr_4", name: "SSL expiring soon", enabled: true, events: ["certificate.expiring"], channels: ["email"], target: "ahmed@railflow.io", createdAt: dayAgo(45) },
+  { id: "nr_5", name: "Database backup failures", enabled: true, events: ["backup.failed"], channels: ["email", "slack"], target: "#databases", createdAt: dayAgo(30) },
+  { id: "nr_6", name: "Container unhealthy", enabled: true, events: ["container.unhealthy", "container.stopped"], channels: ["slack"], target: "#alerts", createdAt: dayAgo(15) },
+];
+
+// ---------- Help Topics ----------
+export const mockHelpTopics: HelpTopic[] = [
+  { id: "h_1", title: "Getting started with Railflow", category: "getting-started", icon: "🚀", description: "Deploy your first project from GitHub to production in under 90 seconds.", readTimeMin: 5, lastUpdated: dayAgo(7), content: "## Quick start\n\n1. Connect your GitHub account\n2. Click **New Project**\n3. Pick a repository\n4. Choose your runtime (Node, Rust, Python, etc.)\n5. Configure build & start commands\n6. Hit **Deploy**\n\nThat's it! Railflow clones your repo, builds a Docker image, and starts a container on your server with automatic TLS.\n\n## Next steps\n\n- Add custom domains in **Project → Domains**\n- Set environment variables (secrets are encrypted)\n- Enable auto-deploy from the `main` branch\n- Set up preview deployments for pull requests" },
+  { id: "h_2", title: "Configuring build commands", category: "deployment", icon: "🔨", description: "Understand how Railflow builds your project for each runtime.", readTimeMin: 4, lastUpdated: dayAgo(3), content: "## Build vs Start\n\n**Build command** runs once during deployment. Use it to compile, transpile, or bundle your code.\n\n**Start command** runs every time the container starts. It should launch your production server.\n\n## Per-runtime defaults\n\n| Runtime | Install | Build | Start |\n|---------|---------|-------|-------|\n| Node.js | `npm ci` | `npm run build` | `npm start` |\n| Rust | `cargo fetch` | `cargo build --release` | `./app` |\n| Python | `pip install -r requirements.txt` | — | `uvicorn app:app` |\n| Go | `go mod download` | `go build -o app ./cmd/app` | `./app` |\n| Static | `npm ci` | `astro build` | `npx serve dist` |" },
+  { id: "h_3", title: "Managing databases", category: "databases", icon: "🐘", description: "Create, connect, and backup managed PostgreSQL, Redis, MongoDB instances.", readTimeMin: 6, lastUpdated: dayAgo(2), content: "## Creating a database\n\n1. Go to **Databases → New**\n2. Pick an engine (PostgreSQL, MySQL, Redis, MongoDB, MariaDB)\n3. Choose a plan (Small / Medium / Large / X-Large)\n4. Pick a region\n5. Optionally link it to a project\n\n## Connection strings\n\nEach database gets two URLs:\n- **Internal** — used by your containers (low latency, free)\n- **External** — used from outside the cluster (rate-limited)\n\n## Backups\n\nAutomatic backups run every 24h with configurable retention (default: 30 days). Manual backups can be triggered anytime. Pre-deploy backups run before each deployment as a safety net." },
+  { id: "h_4", title: "Setting up 2FA & security", category: "security", icon: "🔐", description: "Enable two-factor authentication and review security best practices.", readTimeMin: 3, lastUpdated: dayAgo(5), content: "## Enable 2FA\n\n1. Go to **Settings → Security**\n2. Click **Enable 2FA**\n3. Scan the QR code with Google Authenticator / Authy / 1Password\n4. Enter the 6-digit code to confirm\n5. Save your backup codes somewhere safe\n\n## Best practices\n\n- Use a strong, unique password (we hash with Argon2id)\n- Enable 2FA for all team members with admin/owner roles\n- Rotate API keys every 90 days\n- Review active sessions weekly\n- Use scoped API keys (not full-access) for CI/CD\n\n## Security defaults\n\nRailflow enforces:\n- CSP, HSTS, X-Frame-Options: DENY (via Caddy)\n- Argon2id password hashing (210k iterations)\n- Per-request CSRF tokens\n- Constant-time HMAC verification for webhooks\n- JWT with 24h expiration + refresh tokens" },
+  { id: "h_5", title: "Understanding the deployment pipeline", category: "deployment", icon: "🌊", description: "The 7 stages every deployment goes through, explained.", readTimeMin: 5, lastUpdated: dayAgo(4), content: "## The 7 stages\n\n1. **Queued** — waiting for a build slot (max 4 concurrent builds)\n2. **Cloning** — `git clone` + `git checkout <branch>`\n3. **Building** — runs your build command inside a Docker build context\n4. **Pushing** — pushes the image to your registry (ghcr.io by default)\n5. **Starting** — pulls the image and starts the container with env vars + ports\n6. **Health Check** — polls your `/health` endpoint until 200 OK\n7. **Live** — deployment is live; old container is stopped\n\n## Failure handling\n\nIf any stage fails:\n- The deployment is marked `failed`\n- The error message is captured\n- Auto-rollback is triggered if enabled\n- The previous deployment remains live\n\n## Deploy strategies\n\n- **Rolling** — default, replaces instances one-by-one\n- **Blue/Green** — spins up a new environment, swaps traffic when healthy\n- **Canary** — sends X% of traffic to the new version, monitors error rate\n\nConfigure strategy in **Project → Settings → Deploy Strategy**." },
+  { id: "h_6", title: "Using the API", category: "api", icon: "🔌", description: "Automate Railflow with our REST API and WebSocket streams.", readTimeMin: 8, lastUpdated: dayAgo(1), content: "## Authentication\n\nAll API requests require a Bearer token:\n```\nAuthorization: Bearer <token>\n```\n\nGet a token by logging in via `POST /api/auth/login`, or create a long-lived API key in **Settings → API Keys**.\n\n## WebSocket streams\n\nReal-time updates via WebSocket:\n- `/api/ws/stats/:container_id` — container stats (1Hz)\n- `/api/ws/events` — Docker daemon events\n- `/api/ws/logs/:container_id` — live log tail\n- `/api/ws/server?interval_ms=2000` — host metrics\n\n## Rate limits\n\n- 100 requests/minute per IP (configurable)\n- 10 concurrent WebSocket connections per user\n- API keys inherit the user's rate limit\n\nUse the **API Playground** to test endpoints interactively." },
+  { id: "h_7", title: "Billing & plans", category: "billing", icon: "💳", description: "Plans, limits, overages, and how to upgrade.", readTimeMin: 3, lastUpdated: dayAgo(10), content: "## Plans\n\n| Plan | Price | Projects | Containers | Bandwidth |\n|------|-------|----------|------------|-----------|\n| Hobby | $0/mo | 3 | 5 | 50 GB |\n| Pro | $49/mo | 15 | 25 | 500 GB |\n| Scale | $199/mo | 25 | 50 | 2 TB |\n| Enterprise | Custom | Unlimited | Unlimited | Custom |\n\n## Overages\n\n- Bandwidth: $0.02/GB over plan\n- Storage: $0.10/GB/mo over plan\n- Managed databases: billed per-hour based on plan tier\n\n## Upgrading\n\nGo to **Settings → Billing** to upgrade. Changes are prorated and take effect immediately." },
+  { id: "h_8", title: "Team management & RBAC", category: "security", icon: "👥", description: "Invite team members and assign roles with granular permissions.", readTimeMin: 4, lastUpdated: dayAgo(2), content: "## Roles\n\n- **Owner** — full access including billing, team management, and deletion\n- **Admin** — manage projects, deployments, containers, databases (no billing/team)\n- **Developer** — deploy, view logs, manage environment variables\n- **Viewer** — read-only access to all resources\n\n## Inviting members\n\n1. Go to **Team → Invite Member**\n2. Enter their email\n3. Pick a role\n4. They get an email invitation valid for 7 days\n\n## Permissions matrix\n\n| Action | Owner | Admin | Developer | Viewer |\n|--------|-------|-------|-----------|--------|\n| View projects | ✓ | ✓ | ✓ | ✓ |\n| Deploy | ✓ | ✓ | ✓ | ✗ |\n| Manage env vars | ✓ | ✓ | ✓ | ✗ |\n| Create/delete projects | ✓ | ✓ | ✗ | ✗ |\n| Manage databases | ✓ | ✓ | ✗ | ✗ |\n| Invite members | ✓ | ✓ | ✗ | ✗ |\n| Billing | ✓ | ✗ | ✗ | ✗ |\n| Delete account | ✓ | ✗ | ✗ | ✗ |" },
+];

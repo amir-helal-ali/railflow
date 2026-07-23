@@ -80,6 +80,12 @@ impl DockerService {
         Ok(Self { client })
     }
 
+    /// Borrow the underlying Docker client for advanced operations
+    /// (volumes, networks, etc.) not exposed by this wrapper.
+    pub fn client(&self) -> &Docker {
+        &self.client
+    }
+
     /// List all containers (running + stopped by default).
     pub async fn list_containers(&self, all: bool) -> Result<Vec<ContainerInfo>, AppError> {
         let options = ListContainersOptions::<String> {

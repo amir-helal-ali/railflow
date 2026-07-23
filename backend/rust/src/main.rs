@@ -67,6 +67,8 @@ async fn main() -> anyhow::Result<()> {
         .merge(routes::projects::router())
         .merge(routes::deployments::router())
         .merge(routes::containers::router())
+        .merge(routes::databases::router())
+        .merge(routes::resources::router())
         .merge(routes::server::router())
         .merge(routes::webhooks::router())
         .merge(routes::ws::router())
