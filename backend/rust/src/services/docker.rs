@@ -1,10 +1,9 @@
 // Docker integration via bollard (Rust Docker SDK).
-// Real connection to /var/run/docker.sock — list/build/pull/run/stop containers,
+// Connection to /var/run/docker.sock — list/run/stop/restart containers,
 // stream stats and events in real time.
 
 use bollard::{
     container::{ListContainersOptions, StatsOptions, StopContainerOptions},
-    models::{Config as ContainerCreateBody, ContainerSummary},
     system::EventsOptions,
     Docker,
 };
@@ -70,7 +69,6 @@ impl DockerService {
             Docker::connect_with_unix_defaults()?
         };
 
-        // Verify connection
         let version = client.version().await.map_err(|e| {
             AppError::Internal(format!("Failed to connect to Docker daemon: {e}"))
         })?;
@@ -79,8 +77,7 @@ impl DockerService {
         Ok(Self { client })
     }
 
-    /// Borrow the underlying Docker client for advanced operations
-    /// (volumes, networks, etc.) not exposed by this wrapper.
+    /// Borrow the underlying Docker client for advanced operations.
     pub fn client(&self) -> &Docker {
         &self.client
     }
@@ -100,26 +97,46 @@ impl DockerService {
             .collect())
     }
 
-    /// Get a specific container's info.
+    /// Get a specific container's info by inspecting it.
     pub async fn inspect_container(&self, id: &str) -> Result<ContainerInfo, AppError> {
-        let inspect = self.client.inspect_container(id, None).await?;
+        let inspect = self.client.inspect_container(id, None).await
+            .map_err(|e| AppError::Docker(format!("Failed to inspect container: {e}")))?;
+
+        let name = inspect.name.unwrap_or_default().trim_start_matches('/').to_string();
+        let image = inspect.image.unwrap_or_default();
+        let state = inspect.state.as_ref()
+            .and_then(|s| s.status.as_ref().map(|st| st.clone()))
+            .unwrap_or_default();
+        let status = state.clone();
+        let command = inspect.config.as_ref()
+            .and_then(|c| c.cmd.as_ref())
+            .map(|cmd| cmd.join(" "))
+            .unwrap_or_default();
+        let created = inspect.created.as_ref()
+            .and_then(|c| chrono::DateTime::parse_from_rfc3339(c).ok())
+            .map(|d| d.timestamp())
+            .unwrap_or(0);
+        let labels = inspect.config.as_ref()
+            .and_then(|c| c.labels.clone())
+            .unwrap_or_default();
 
         Ok(ContainerInfo {
             id: inspect.id.unwrap_or_default(),
-            name: inspect.name.unwrap_or_default().trim_start_matches('/').to_string(),
-            image: inspect.image.unwrap_or_default(),
-            status: inspect.state.as_ref().and_then(|s| s.status.clone()).unwrap_or_default().into(),
-            state: inspect.state.as_ref().and_then(|s| s.status.clone()).unwrap_or_default().into(),
-            command: inspect.config.as_ref().and_then(|c| c.cmd.clone()).unwrap_or_default().join(" "),
-            created: inspect.created.as_ref().and_then(|c| chrono::DateTime::parse_from_rfc3339(c).ok()).map(|d| d.timestamp()).unwrap_or(0),
-            ports: Vec::new(), // populated from inspect.Config.ExposedPorts if needed
-            labels: inspect.config.as_ref().and_then(|c| c.labels.clone()).unwrap_or_default(),
+            name,
+            image,
+            status,
+            state,
+            command,
+            created,
+            ports: Vec::new(),
+            labels,
         })
     }
 
     /// Start a container.
     pub async fn start_container(&self, id: &str) -> Result<(), AppError> {
-        self.client.start_container(id, None).await?;
+        self.client.start_container(id, None).await
+            .map_err(|e| AppError::Docker(format!("Failed to start container: {e}")))?;
         Ok(())
     }
 
@@ -127,7 +144,8 @@ impl DockerService {
     pub async fn stop_container(&self, id: &str, timeout_secs: i32) -> Result<(), AppError> {
         self.client
             .stop_container(id, Some(StopContainerOptions { t: timeout_secs }))
-            .await?;
+            .await
+            .map_err(|e| AppError::Docker(format!("Failed to stop container: {e}")))?;
         Ok(())
     }
 
@@ -135,7 +153,8 @@ impl DockerService {
     pub async fn restart_container(&self, id: &str, timeout_secs: i32) -> Result<(), AppError> {
         self.client
             .restart_container(id, Some(StopContainerOptions { t: timeout_secs }))
-            .await?;
+            .await
+            .map_err(|e| AppError::Docker(format!("Failed to restart container: {e}")))?;
         Ok(())
     }
 
@@ -150,7 +169,8 @@ impl DockerService {
                     volumes: true,
                 }),
             )
-            .await?;
+            .await
+            .map_err(|e| AppError::Docker(format!("Failed to remove container: {e}")))?;
         Ok(())
     }
 
@@ -163,12 +183,15 @@ impl DockerService {
         ports: HashMap<u16, u16>,
         labels: HashMap<String, String>,
     ) -> Result<String, AppError> {
+        use bollard::models::ContainerCreateBody;
+
         let mut exposed_ports = HashMap::new();
         let mut port_bindings = HashMap::new();
-        for (host, container) in ports {
-            exposed_ports.insert(format!("{container}/tcp"), HashMap::new());
+        for (host, container) in &ports {
+            let key = format!("{container}/tcp");
+            exposed_ports.insert(key.clone(), HashMap::new());
             port_bindings.insert(
-                format!("{container}/tcp"),
+                key,
                 Some(vec![bollard::models::PortBinding {
                     host_ip: Some("0.0.0.0".into()),
                     host_port: Some(host.to_string()),
@@ -195,17 +218,19 @@ impl DockerService {
         let created = self.client.create_container(
             Some(bollard::container::CreateContainerOptions {
                 name: name.to_string(),
-                ..Default::default()
+                platform: None,
             }),
             config,
         ).await
             .map_err(|e| AppError::Docker(format!("Failed to create container: {e}")))?;
+
         self.client.start_container(&created.id, None).await
             .map_err(|e| AppError::Docker(format!("Failed to start container: {e}")))?;
+
         Ok(created.id)
     }
 
-    /// Live stats stream — pushes ContainerStats to channel at 1Hz.
+    /// Live stats stream — pushes ContainerStats to channel.
     pub fn stats_stream(&self, container_id: String) -> mpsc::Receiver<Result<ContainerStats, AppError>> {
         let (tx, rx) = mpsc::channel(32);
         let client = self.client.clone();
@@ -250,7 +275,8 @@ impl DockerService {
                     r#type: event.typ.unwrap_or_default(),
                     action: action_str.clone(),
                     actor_id: event.actor.and_then(|a| a.id).unwrap_or_default(),
-                    time: chrono::DateTime::from_timestamp(event.time.unwrap_or(0), 0).unwrap_or_else(|| chrono::Utc::now()),
+                    time: chrono::DateTime::from_timestamp(event.time.unwrap_or(0), 0)
+                        .unwrap_or_else(|| chrono::Utc::now()),
                     message: format!("{action_str} on {actor_name}"),
                 };
                 if tx.send(Ok(parsed)).await.is_err() {
@@ -262,7 +288,7 @@ impl DockerService {
         rx
     }
 
-    /// Stream container logs (tail). Returns a pinned boxed stream.
+    /// Stream container logs (tail) via a channel.
     pub async fn logs_stream(
         &self,
         container_id: &str,
@@ -305,7 +331,7 @@ impl DockerService {
         Ok(tokio_stream::wrappers::ReceiverStream::new(rx))
     }
 
-    fn map_container_summary(&self, c: ContainerSummary) -> Option<ContainerInfo> {
+    fn map_container_summary(&self, c: bollard::models::ContainerSummary) -> Option<ContainerInfo> {
         Some(ContainerInfo {
             id: c.id?,
             name: c.names?.into_iter().next()?.trim_start_matches('/').to_string(),
@@ -314,11 +340,13 @@ impl DockerService {
             state: c.state.unwrap_or_default(),
             command: c.command.unwrap_or_default(),
             created: c.created.unwrap_or(0),
-            ports: c.ports.unwrap_or_default().into_iter().filter_map(|p| Some(PortMapping {
-                host: p.public_port,
-                container: p.private_port?,
-                protocol: p.typ.unwrap_or_default(),
-            })).collect(),
+            ports: c.ports.unwrap_or_default().into_iter().filter_map(|p| {
+                Some(PortMapping {
+                    host: p.public_port,
+                    container: p.private_port?,
+                    protocol: p.typ.unwrap_or_default(),
+                })
+            }).collect(),
             labels: c.labels.unwrap_or_default(),
         })
     }

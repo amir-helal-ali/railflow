@@ -127,7 +127,7 @@ async fn verify_2fa(
         state.config.totp_issuer.clone(),
     );
 
-    let secret = user.totp_secret.ok_or_else(|| AppError::Internal("2FA not configured".into()))?;
+    let secret = user.totp_secret.clone().ok_or_else(|| AppError::Internal("2FA not configured".into()))?;
     if !auth.verify_totp(&secret, &user.email, &req.code)? {
         return Err(AppError::Unauthorized("Invalid verification code".into()));
     }

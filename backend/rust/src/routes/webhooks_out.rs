@@ -215,13 +215,15 @@ async fn redeliver(
 
     let state_clone = state.clone();
     tokio::spawn(async move {
-        let secret: String = sqlx::query_scalar("SELECT secret FROM webhooks WHERE id = $1")
+        let row = sqlx::query("SELECT url, secret FROM webhooks WHERE id = $1")
             .bind(webhook_id)
             .fetch_one(&state_clone.db)
             .await
-            .unwrap_or_default();
+            .unwrap_or_else(|_| panic!("webhook not found"));
+        let webhook_url: String = row.try_get("url").unwrap_or_default();
+        let secret: String = row.try_get("secret").unwrap_or_default();
         let payload: serde_json::Value = serde_json::from_str(&body).unwrap_or_default();
-        if let Err(e) = crate::services::webhook_deliverer::deliver(&state_clone, webhook_id, &url, &secret, &event, &payload).await {
+        if let Err(e) = crate::services::webhook_deliverer::deliver(&state_clone, webhook_id, &webhook_url, &secret, &event, &payload).await {
             tracing::error!("Webhook redeliver failed: {e}");
         }
     });

@@ -2,7 +2,7 @@
 // Provides CPU, memory, disk, network, and process information.
 
 use serde::{Deserialize, Serialize};
-use sysinfo::{CpuRefreshKind, Disk, Disks, Networks, Pid, ProcessRefreshKind, RefreshKind, System};
+use sysinfo::{Disk, Disks, Networks, RefreshKind, System};
 
 #[derive(Clone)]
 pub struct ServerService {
