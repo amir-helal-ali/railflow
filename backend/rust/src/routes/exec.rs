@@ -72,7 +72,7 @@ async fn exec_command(
     match state.docker.client().start_exec(&exec.id, None).await
         .map_err(|e| AppError::Docker(format!("Failed to start exec: {e}")))?
     {
-        StartExecResults::Attached { mut output: mut stream, .. } => {
+        StartExecResults::Attached { output: mut stream, .. } => {
             use futures_util::StreamExt;
             while let Some(Ok(msg)) = stream.next().await {
                 use bollard::exec::LogOutput;

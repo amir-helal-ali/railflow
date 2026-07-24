@@ -194,8 +194,10 @@ impl DockerService {
             ..Default::default()
         };
 
-        let created = self.client.create_container(Some(config.clone()), config).await?;
-        self.client.start_container(&created.id, None).await?;
+        let created = self.client.create_container(Some(config.clone()), config).await
+            .map_err(|e| AppError::Docker(format!("Failed to create container: {e}")))?;
+        self.client.start_container(&created.id, None).await
+            .map_err(|e| AppError::Docker(format!("Failed to start container: {e}")))?;
         Ok(created.id)
     }
 
@@ -205,7 +207,7 @@ impl DockerService {
         let client = self.client.clone();
 
         tokio::spawn(async move {
-            let options = StatsOptions { stream: true, one-shot: false };
+            let options = StatsOptions { stream: true, one_shot: false };
             let mut stream = client.stats(&container_id, Some(options));
 
             while let Some(Ok(stats)) = stream.next().await {
@@ -230,17 +232,22 @@ impl DockerService {
                 until: None,
                 filters: HashMap::new(),
             };
-            let mut stream: Box<dyn Stream<Item = Result<bollard::system::Event, bollard::errors::Error>> + Send + Unpin> =
-                Box::new(client.events(Some(options)));
+            let mut stream = client.events(Some(options));
 
             while let Some(Ok(event)) = stream.next().await {
+                let action_str = event.action.clone().unwrap_or_default();
+                let actor_name = event.actor.as_ref()
+                    .and_then(|a| a.attributes.as_ref())
+                    .and_then(|attrs| attrs.get("name"))
+                    .cloned()
+                    .unwrap_or_default();
                 let parsed = DockerEvent {
                     id: uuid::Uuid::new_v4().to_string(),
                     r#type: event.typ.unwrap_or_default(),
-                    action: event.action.unwrap_or_default(),
+                    action: action_str.clone(),
                     actor_id: event.actor.and_then(|a| a.id).unwrap_or_default(),
                     time: chrono::DateTime::from_timestamp(event.time.unwrap_or(0), 0).unwrap_or_else(|| chrono::Utc::now()),
-                    message: format!("{} on {}", event.action.unwrap_or_default().as_str(), event.actor.as_ref().and_then(|a| a.attributes.as_ref().and_then(|attrs| attrs.get("name").cloned())).unwrap_or_default()),
+                    message: format!("{action_str} on {actor_name}"),
                 };
                 if tx.send(Ok(parsed)).await.is_err() {
                     break;
@@ -308,12 +315,12 @@ fn parse_stats(stats: &bollard::container::Stats) -> ContainerStats {
         0.0
     };
 
-    let memory_used = stats.cpu_stats.memory_stats.usage.unwrap_or(0) as f64
-        - stats.cpu_stats.memory_stats.stats.as_ref()
+    let memory_used = stats.memory_stats.usage.unwrap_or(0) as f64
+        - stats.memory_stats.stats.as_ref()
             .and_then(|s| s.get("cache"))
             .and_then(|c| c.as_u64())
             .unwrap_or(0) as f64;
-    let memory_limit = stats.cpu_stats.memory_stats.limit.unwrap_or(0) as f64;
+    let memory_limit = stats.memory_stats.limit.unwrap_or(0) as f64;
 
     let (net_in, net_out) = stats
         .networks

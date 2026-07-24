@@ -2,7 +2,6 @@
 // Provides CPU, memory, disk, network, and process information.
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use sysinfo::{CpuRefreshKind, Disk, Disks, Networks, Pid, ProcessRefreshKind, RefreshKind, System};
 
 #[derive(Clone)]
@@ -155,13 +154,13 @@ impl ServerService {
         let used_disk: f64 = partitions.iter().map(|p| p.used_gb).sum();
 
         // Networks
-        let networks = NetworkList::new_with_refreshed_list();
+        let networks = Networks::new_with_refreshed_list();
         let interfaces: Vec<NetworkInterface> = networks
             .list()
             .iter()
             .map(|(name, data)| NetworkInterface {
                 name: name.to_string(),
-                ip: String::new(), // sysinfo doesn't give IPs directly; use if-addrs in production
+                ip: String::new(),
                 mac: String::new(),
                 inbound_mbps: data.received() as f64 / 1024.0 / 1024.0,
                 outbound_mbps: data.transmitted() as f64 / 1024.0 / 1024.0,
@@ -240,16 +239,5 @@ impl ServerService {
         procs.sort_by(|a, b| b.cpu_percent.partial_cmp(&a.cpu_percent).unwrap_or(std::cmp::Ordering::Equal));
         procs.truncate(limit);
         procs
-    }
-}
-
-// Wrapper to fix the missing NetworkList name in some versions
-struct NetworkList(Networks);
-impl NetworkList {
-    fn new_with_refreshed_list() -> Self {
-        Self(Networks::new_with_refreshed_list())
-    }
-    fn list(&self) -> &HashMap<String, sysinfo::NetworkData> {
-        self.0.list()
     }
 }
