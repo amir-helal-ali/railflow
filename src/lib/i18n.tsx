@@ -458,11 +458,8 @@ const en: Dict = {
   "certificates.status.renewing": "Renewing",
   "certificates.renewNow": "Renew now",
 
-  // Common additions
-  "common.yes": "Yes",
-  "common.no": "No",
+  // Common additions (extras not already defined above)
   "common.host": "Host",
-  "common.port": "Port",
   "common.username": "Username",
   "common.password": "Password",
   "common.engine": "Engine",
@@ -1378,11 +1375,8 @@ const ar: Dict = {
   "certificates.status.renewing": "قيد التجديد",
   "certificates.renewNow": "جدّد الآن",
 
-  // Common additions
-  "common.yes": "نعم",
-  "common.no": "لا",
+  // Common additions (extras not already defined above)
   "common.host": "المضيف",
-  "common.port": "المنفذ",
   "common.username": "اسم المستخدم",
   "common.password": "كلمة المرور",
   "common.engine": "المحرك",

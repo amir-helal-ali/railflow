@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  # ---------- Frontend lint + type check + build ----------
+  frontend:
+    name: Frontend (Next.js)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: bun run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+
+  # ---------- Backend Rust check ----------
+  backend:
+    name: Backend (Rust)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/rust
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            backend/rust/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('backend/rust/Cargo.toml') }}
+
+      - name: Check formatting
+        run: cargo fmt -- --check
+        continue-on-error: true
+
+      - name: Build
+        run: cargo build --release
+        env:
+          # Skip linking system OpenSSL — use rustls
+          OPENSSL_NO_VENDOR: 0
+
+  # ---------- Docker build test ----------
+  docker:
+    name: Docker Images
+    runs-on: ubuntu-latest
+    needs: [frontend, backend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.frontend
+          push: false
+          tags: railflow/frontend:ci
+
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend/rust
+          file: ./backend/rust/Dockerfile
+          push: false
+          tags: railflow/backend:ci

@@ -182,7 +182,7 @@ function DatabaseDetail({ db }: { db: ManagedDatabase }) {
           <CredRow label={t("common.password")} value={showCreds ? "realpassword" : db.connectionInfo.passwordMasked} onCopy={() => copy("pw", "realpassword")} copied={copied === "pw"} />
           <CredRow label={t("databases.internalUrl")} value={db.connectionInfo.internalUrl} onCopy={() => copy("url", db.connectionInfo.internalUrl)} copied={copied === "url"} mono />
           {db.connectionInfo.externalUrl && (
-            <CredRow label={t("databases.externalUrl")} value={db.connectionInfo.externalUrl} onCopy={() => copy("eurl", db.connectionInfo.externalUrl)} copied={copied === "eurl"} mono />
+            <CredRow label={t("databases.externalUrl")} value={db.connectionInfo.externalUrl} onCopy={() => copy("eurl", db.connectionInfo.externalUrl ?? "")} copied={copied === "eurl"} mono />
           )}
         </div>
       </div>

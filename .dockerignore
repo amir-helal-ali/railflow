@@ -1,0 +1,45 @@
+# Build context exclusions for Docker — keeps images small and builds fast.
+
+# Version control
+.git
+.gitignore
+.github
+
+# Docs
+README.md
+*.md
+docs/
+changelog/
+learn/
+site/
+demo/
+migration-playbook/
+deploy-guide/
+
+# Not needed in image
+skills/
+examples/
+tests/
+mini-services/
+scripts/
+download/
+worklog.md
+dev.log
+server.log
+
+# IDE
+.idea/
+.vscode/
+
+# Environment (mounted at runtime)
+.env
+.env*.local
+
+# Build artifacts (rebuilt in image)
+.next/
+node_modules/
+backend/rust/target/
+
+# OS files
+.DS_Store
+Thumbs.db

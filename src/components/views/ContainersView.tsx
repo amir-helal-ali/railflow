@@ -20,6 +20,7 @@ import {
 import { useI18n } from "@/lib/i18n";
 import { useRouter } from "@/lib/router";
 import { mockContainers, mockDockerEvents } from "@/lib/mock-data";
+import type { DockerEvent } from "@/lib/types";
 import { StatusBadge, SectionHeader } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +38,7 @@ export function ContainersView() {
   useInterval(() => {
     // Simulate new events
     if (Math.random() > 0.7) {
-      setEvents((e) => [{
+      const newEvent: DockerEvent = {
         id: `e_new_${Date.now()}`,
         type: "container",
         action: "health_status: healthy",
@@ -45,7 +46,8 @@ export function ContainersView() {
         scope: "local",
         time: new Date().toISOString(),
         message: "Container health check passed",
-      }, ...e].slice(0, 50));
+      };
+      setEvents((e) => [newEvent, ...e].slice(0, 50));
     }
   }, 6000);
 

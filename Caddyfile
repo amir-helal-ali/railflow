@@ -1,66 +1,89 @@
-# Railflow edge proxy — automatic HTTPS via Caddy
-# Replace railflow.io with your actual domain
+# ============================================================
+# Railflow — Caddy edge proxy configuration
+# Auto-HTTPS via Let's Encrypt + security headers + reverse proxy
+#
+# Replace railflow.io with your actual domain,
+# or use :80 for local-only development.
+# ============================================================
 
 {
     # Global options
     admin off
     persist_config
-    # Auto HTTPS with Let's Encrypt
-    email admin@railflow.io
+
+    # Auto HTTPS with Let's Encrypt (set your email)
+    # email admin@railflow.io
+
+    # OCSP stapling
+    ocsp_stapling off
 }
 
-# ---- Main app ----
-railflow.io {
+# ---- Local development (HTTP only) ----
+# Comment this block out when deploying with a real domain.
+:80 {
     encode gzip zstd
 
-    # WebSocket + API proxy to backend
+    # API + WebSocket → backend
     @api path /api/* /ws/*
     reverse_proxy @api backend:8080 {
-            header_up Host {host}
-            header_up X-Real-IP {remote_host}
-            header_up X-Forwarded-For {remote_host}
-            header_up X-Forwarded-Proto {scheme}
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
     }
 
     # Everything else → frontend
     reverse_proxy frontend:3000 {
-            header_up Host {host}
-            header_up X-Real-IP {remote_host}
-            header_up X-Forwarded-For {remote_host}
-            header_up X-Forwarded-Proto {scheme}
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
     }
 
     # Security headers
     header {
-            Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-            X-Content-Type-Options nosniff
-            X-Frame-Options DENY
-            Referrer-Policy strict-origin-when-cross-origin
-            Permissions-Policy "camera=(), microphone=(), geolocation=()"
-            Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' wss: https:; frame-ancestors 'none'"
-            -Server
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy strict-origin-when-cross-origin
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        -Server
     }
 
-    # Compression + logging
     log {
-            output stdout
-            format json
+        output stdout
+        format json
     }
 }
 
-# ---- API subdomain ----
-api.railflow.io {
-    encode gzip zstd
-    reverse_proxy backend:8080
-    header {
-            Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-            X-Content-Type-Options nosniff
-            X-Frame-Options DENY
-    }
-}
+# ---- Production with auto-TLS ----
+# Uncomment and set your domain when deploying to production.
 
-# ---- Preview deployments wildcard ----
-*.preview.railflow.app {
-    encode gzip zstd
-    reverse_proxy frontend:3000
-}
+# railflow.io {
+#     encode gzip zstd
+#
+#     @api path /api/* /ws/*
+#     reverse_proxy @api backend:8080
+#
+#     reverse_proxy frontend:3000
+#
+#     header {
+#         Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+#         X-Content-Type-Options nosniff
+#         X-Frame-Options DENY
+#         Referrer-Policy strict-origin-when-cross-origin
+#         Permissions-Policy "camera=(), microphone=(), geolocation=()"
+#         Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' wss: https:; frame-ancestors 'none'"
+#         -Server
+#     }
+#
+#     log {
+#         output stdout
+#         format json
+#     }
+# }
+#
+# api.railflow.io {
+#     encode gzip zstd
+#     reverse_proxy backend:8080
+# }

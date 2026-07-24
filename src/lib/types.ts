@@ -519,6 +519,7 @@ export interface Alert {
   resolved: boolean;
   resourceType?: string;
   resourceId?: string;
+  ip?: string;
   actions?: Array<{ label: string; type: "primary" | "secondary" | "danger" }>;
 }
 
