@@ -104,10 +104,9 @@ impl DockerService {
 
         let name = inspect.name.unwrap_or_default().trim_start_matches('/').to_string();
         let image = inspect.image.unwrap_or_default();
-        let state = inspect.state.as_ref()
-            .and_then(|s| s.status.as_ref().map(|st| st.clone()))
+        let state_str = inspect.state.as_ref()
+            .and_then(|s| s.status.as_ref().map(|st| format!("{st:?}")))
             .unwrap_or_default();
-        let status = state.clone();
         let command = inspect.config.as_ref()
             .and_then(|c| c.cmd.as_ref())
             .map(|cmd| cmd.join(" "))
@@ -124,8 +123,8 @@ impl DockerService {
             id: inspect.id.unwrap_or_default(),
             name,
             image,
-            status,
-            state,
+            status: state_str.clone(),
+            state: state_str,
             command,
             created,
             ports: Vec::new(),
@@ -183,7 +182,7 @@ impl DockerService {
         ports: HashMap<u16, u16>,
         labels: HashMap<String, String>,
     ) -> Result<String, AppError> {
-        use bollard::models::ContainerCreateBody;
+        use bollard::models::Config;
 
         let mut exposed_ports = HashMap::new();
         let mut port_bindings = HashMap::new();
@@ -199,7 +198,7 @@ impl DockerService {
             );
         }
 
-        let config = ContainerCreateBody {
+        let config = Config {
             image: Some(image.to_string()),
             env: Some(env),
             exposed_ports: Some(exposed_ports),
@@ -347,7 +346,7 @@ impl DockerService {
                     protocol: p.typ.unwrap_or_default(),
                 })
             }).collect(),
-            labels: c.labels.unwrap_or_default(),
+            labels: c.labels.unwrap_or_else(HashMap::new),
         })
     }
 }
