@@ -17,10 +17,12 @@ import {
   XCircle,
   Activity,
   Server,
+  Settings2,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { mockSecurityFindings, mockSecurityScans, mockFirewallRules } from "@/lib/mock-data";
-import { StatusBadge, SectionHeader, RadialGauge } from "@/components/dashboard/shared";
+import { StatusBadge, SectionHeader } from "@/components/dashboard/shared";
+import { RadialGauge } from "@/components/charts";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { timeAgo } from "@/lib/format";
@@ -49,9 +51,6 @@ const categoryIcon: Record<SecurityFinding["category"], React.ElementType> = {
   "weak-auth": Lock,
   "open-port": Server,
 };
-
-// Import Settings2 from lucide
-import { Settings2 } from "lucide-react";
 
 export function SecurityView() {
   const { t, locale } = useI18n();

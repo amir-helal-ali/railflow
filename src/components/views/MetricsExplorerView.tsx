@@ -157,7 +157,7 @@ export function MetricsExplorerView() {
                 <span>·</span>
                 <span>{t("metricsExplorer.unit")}: <span className="text-cyan-300">{selectedMetric.unit || "—"}</span></span>
                 <span>·</span>
-                <span>{t("metricsExplorer.source")}: <span className={sourceColor[selectedMetric.source].split(" ")[1]} className="capitalize">{selectedMetric.source}</span></span>
+                <span>{t("metricsExplorer.source")}: <span className={cn(sourceColor[selectedMetric.source].split(" ")[1], "capitalize")}>{selectedMetric.source}</span></span>
                 {selectedMetric.labels.length > 0 && (
                   <>
                     <span>·</span>

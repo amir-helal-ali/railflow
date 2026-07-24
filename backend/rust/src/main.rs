@@ -74,6 +74,7 @@ async fn main() -> anyhow::Result<()> {
         .merge(routes::resources::router())
         .merge(routes::alerts::router())
         .merge(routes::marketplace::router())
+        .merge(routes::security::router())
         .merge(routes::webhooks_out::router())
         .merge(routes::server::router())
         .merge(routes::webhooks::router())

@@ -32,11 +32,14 @@ import {
   Store,
   Globe,
   ScrollText,
+  ShieldAlert,
+  Gauge,
+  Plug,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
 import { useRouter, type View } from "@/lib/router";
-import { mockProjects, mockDatabases, mockContainers, mockAlerts, mockPipelines, mockApiHealthChecks, mockTemplates } from "@/lib/mock-data";
+import { mockProjects, mockDatabases, mockContainers, mockAlerts, mockPipelines, mockApiHealthChecks, mockTemplates, mockSecurityFindings, mockIntegrations } from "@/lib/mock-data";
 
 type NavItem = {
   icon: React.ElementType;
@@ -56,6 +59,7 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle?
 
   const activeAlerts = mockAlerts.filter((a) => !a.resolved && !a.acknowledged).length;
   const downServices = mockApiHealthChecks.filter((c) => c.status === "down").length;
+  const openFindings = mockSecurityFindings.filter((f) => f.status === "open").length;
 
   const groups: NavGroup[] = [
     {
@@ -79,13 +83,16 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle?
         { icon: TerminalSquare, labelKey: "terminal.title", view: { name: "terminal" } },
         { icon: ScrollText, labelKey: "logsAgg.title", view: { name: "logsAgg" } },
         { icon: Server, labelKey: "nav.server", view: { name: "server" } },
+        { icon: Activity, labelKey: "metricsExplorer.title", view: { name: "metricsExplorer" } },
         { icon: HeartPulse, labelKey: "apiHealth.title", view: { name: "apiHealth" }, badge: downServices || undefined },
+        { icon: Gauge, labelKey: "performance.title", view: { name: "performance" } },
         { icon: Database, labelKey: "nav.databases", view: { name: "databases" }, badge: mockDatabases.length },
         { icon: HardDrive, labelKey: "nav.volumes", view: { name: "volumes" } },
         { icon: Network, labelKey: "nav.networks", view: { name: "networks" } },
         { icon: Globe, labelKey: "regions.title", view: { name: "regions" } },
         { icon: Archive, labelKey: "backups.title", view: { name: "backups" } },
         { icon: ShieldCheck, labelKey: "certificates.title", view: { name: "certificates" } },
+        { icon: ShieldAlert, labelKey: "security.title", view: { name: "security" }, badge: openFindings || undefined },
         { icon: GitBranch, labelKey: "strategies.title", view: { name: "strategies" } },
         { icon: Webhook, labelKey: "webhooks.title", view: { name: "webhooks" } },
       ],
@@ -93,6 +100,7 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle?
     {
       titleKey: "nav.group.account",
       items: [
+        { icon: Plug, labelKey: "integrations.title", view: { name: "integrations" }, badge: mockIntegrations.filter((i) => i.installed).length },
         { icon: Code2, labelKey: "playground.title", view: { name: "playground" } },
         { icon: DollarSign, labelKey: "cost.title", view: { name: "cost" } },
         { icon: BookOpen, labelKey: "help.title", view: { name: "help" } },

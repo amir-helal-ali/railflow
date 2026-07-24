@@ -34,6 +34,10 @@ import { AuditSearchView } from "@/components/views/AuditSearchView";
 import { MarketplaceView } from "@/components/views/MarketplaceView";
 import { RegionsView } from "@/components/views/RegionsView";
 import { LogsAggView } from "@/components/views/LogsAggView";
+import { SecurityView } from "@/components/views/SecurityView";
+import { PerformanceView } from "@/components/views/PerformanceView";
+import { MetricsExplorerView } from "@/components/views/MetricsExplorerView";
+import { IntegrationsView } from "@/components/views/IntegrationsView";
 import { useLocalStorage } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -140,6 +144,10 @@ export function AppShell() {
               {view.name === "marketplace" && <MarketplaceView />}
               {view.name === "regions" && <RegionsView />}
               {view.name === "logsAgg" && <LogsAggView />}
+              {view.name === "security" && <SecurityView />}
+              {view.name === "performance" && <PerformanceView />}
+              {view.name === "metricsExplorer" && <MetricsExplorerView />}
+              {view.name === "integrations" && <IntegrationsView />}
               {view.name === "settings" && <SettingsView tab={view.tab} />}
             </ViewBoundary>
           </div>

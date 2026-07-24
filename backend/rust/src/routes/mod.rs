@@ -9,6 +9,7 @@ pub mod marketplace;
 pub mod pipelines;
 pub mod projects;
 pub mod resources;
+pub mod security;
 pub mod server;
 pub mod webhooks;
 pub mod webhooks_out;
