@@ -4,11 +4,10 @@
 
 use bollard::{
     container::{ListContainersOptions, StatsOptions, StopContainerOptions},
-    models::{ContainerCreateBody, ContainerSummary},
+    models::{Config as ContainerCreateBody, ContainerSummary},
     system::EventsOptions,
     Docker,
 };
-use futures_core::Stream;
 use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -179,7 +178,6 @@ impl DockerService {
 
         let config = ContainerCreateBody {
             image: Some(image.to_string()),
-            name: Some(name.to_string()),
             env: Some(env),
             exposed_ports: Some(exposed_ports),
             host_config: Some(bollard::models::HostConfig {
@@ -194,7 +192,13 @@ impl DockerService {
             ..Default::default()
         };
 
-        let created = self.client.create_container(Some(config.clone()), config).await
+        let created = self.client.create_container(
+            Some(bollard::container::CreateContainerOptions {
+                name: name.to_string(),
+                ..Default::default()
+            }),
+            config,
+        ).await
             .map_err(|e| AppError::Docker(format!("Failed to create container: {e}")))?;
         self.client.start_container(&created.id, None).await
             .map_err(|e| AppError::Docker(format!("Failed to start container: {e}")))?;
@@ -258,12 +262,12 @@ impl DockerService {
         rx
     }
 
-    /// Stream container logs (tail).
+    /// Stream container logs (tail). Returns a pinned boxed stream.
     pub async fn logs_stream(
         &self,
         container_id: &str,
         tail: u64,
-    ) -> Result<impl Stream<Item = Result<String, AppError>> + Send, AppError> {
+    ) -> Result<tokio_stream::wrappers::ReceiverStream<Result<String, AppError>>, AppError> {
         let options = bollard::container::LogsOptions::<String> {
             stdout: true,
             stderr: true,
@@ -273,15 +277,32 @@ impl DockerService {
             ..Default::default()
         };
 
-        let stream = self.client.logs(container_id, Some(options));
-        Ok(stream.filter_map(|item| async move {
-            match item {
-                Ok(bollard::container::LogOutput::StdOut { message }) => Some(Ok(String::from_utf8_lossy(&message).to_string())),
-                Ok(bollard::container::LogOutput::StdErr { message }) => Some(Ok(String::from_utf8_lossy(&message).to_string())),
-                Ok(_) => None,
-                Err(e) => Some(Err(AppError::Internal(format!("Log stream error: {e}")))),
+        let (tx, rx) = mpsc::channel::<Result<String, AppError>>(64);
+        let client = self.client.clone();
+        let cid = container_id.to_string();
+
+        tokio::spawn(async move {
+            let mut stream = client.logs(&cid, Some(options));
+            while let Some(item) = stream.next().await {
+                match item {
+                    Ok(bollard::container::LogOutput::StdOut { message }) => {
+                        let line = String::from_utf8_lossy(&message).to_string();
+                        if tx.send(Ok(line)).await.is_err() { break; }
+                    }
+                    Ok(bollard::container::LogOutput::StdErr { message }) => {
+                        let line = String::from_utf8_lossy(&message).to_string();
+                        if tx.send(Ok(line)).await.is_err() { break; }
+                    }
+                    Ok(_) => {}
+                    Err(e) => {
+                        let _ = tx.send(Err(AppError::Internal(format!("Log stream error: {e}")))).await;
+                        break;
+                    }
+                }
             }
-        }))
+        });
+
+        Ok(tokio_stream::wrappers::ReceiverStream::new(rx))
     }
 
     fn map_container_summary(&self, c: ContainerSummary) -> Option<ContainerInfo> {

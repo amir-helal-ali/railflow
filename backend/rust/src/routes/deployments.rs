@@ -92,7 +92,7 @@ async fn get_deployment_logs(
     State(state): State<SharedState>,
     _user: AuthUser,
     Path(id): Path<Uuid>,
-) -> Result<Json<Vec<serde_json::Value>, std::alloc::Global>, AppError> {
+) -> Result<Json<Vec<serde_json::Value>>, AppError> {
     // In production: fetch from log storage (S3 / local file)
     // For now, return empty — frontend uses WebSocket /api/ws/logs/:id
     Ok(Json(Vec::new()))

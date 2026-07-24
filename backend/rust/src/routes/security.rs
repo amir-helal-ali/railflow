@@ -15,6 +15,7 @@ use crate::{
     middleware::auth::AuthUser,
     services::state::SharedState,
 };
+use crate::services::db_json::rows_to_json;
 
 pub fn router() -> Router<SharedState> {
     Router::new()
@@ -55,7 +56,7 @@ async fn list_findings(
     .bind(q.category)
     .fetch_all(&state.db)
     .await?;
-    Ok(json!({ "findings": findings }).into())
+    Ok(json!({ "findings": rows_to_json(&findings) }).into())
 }
 
 async fn get_finding(
@@ -68,7 +69,7 @@ async fn get_finding(
         .fetch_optional(&state.db)
         .await?
         .ok_or_else(|| AppError::NotFound("Finding not found".into()))?;
-    Ok(Json(json!(finding)))
+    Ok(Json(crate::services::db_json::row_to_json(&finding)))
 }
 
 async fn update_finding(
@@ -118,7 +119,7 @@ async fn list_scans(
     let scans = sqlx::query("SELECT * FROM security_scans ORDER BY started_at DESC LIMIT 50")
         .fetch_all(&state.db)
         .await?;
-    Ok(json!({ "scans": scans }).into())
+    Ok(json!({ "scans": rows_to_json(&scans) }).into())
 }
 
 #[derive(Deserialize)]
@@ -165,7 +166,7 @@ async fn get_scan(
         .fetch_optional(&state.db)
         .await?
         .ok_or_else(|| AppError::NotFound("Scan not found".into()))?;
-    Ok(Json(json!(scan)))
+    Ok(Json(crate::services::db_json::row_to_json(&scan)))
 }
 
 async fn list_firewall_rules(
@@ -175,7 +176,7 @@ async fn list_firewall_rules(
     let rules = sqlx::query("SELECT * FROM firewall_rules ORDER BY priority ASC, created_at DESC")
         .fetch_all(&state.db)
         .await?;
-    Ok(json!({ "rules": rules }).into())
+    Ok(json!({ "rules": rows_to_json(&rules) }).into())
 }
 
 #[derive(Deserialize)]

@@ -8,6 +8,7 @@ use axum::{
 };
 use serde::Deserialize;
 use serde_json::json;
+use sqlx::Row;
 use uuid::Uuid;
 
 use crate::{
@@ -15,6 +16,7 @@ use crate::{
     middleware::auth::AuthUser,
     services::state::SharedState,
 };
+use crate::services::db_json::rows_to_json;
 
 pub fn router() -> Router<SharedState> {
     Router::new()
@@ -46,7 +48,7 @@ async fn list_webhooks(
             .fetch_all(&state.db)
             .await?
     };
-    Ok(json!({ "webhooks": webhooks }).into())
+    Ok(json!({ "webhooks": rows_to_json(&webhooks) }).into())
 }
 
 async fn get_webhook(
@@ -59,7 +61,7 @@ async fn get_webhook(
         .fetch_optional(&state.db)
         .await?
         .ok_or_else(|| AppError::NotFound("Webhook not found".into()))?;
-    Ok(Json(json!(wh)))
+    Ok(Json(crate::services::db_json::row_to_json(&wh)))
 }
 
 #[derive(Deserialize)]
@@ -143,14 +145,15 @@ async fn test_webhook(
     _user: AuthUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, AppError> {
-    let wh: Option<(String, String, String)> = sqlx::query_as(
-        "SELECT name, url, secret FROM webhooks WHERE id = $1"
-    )
-    .bind(id)
-    .fetch_optional(&state.db)
-    .await?;
+    let wh = sqlx::query("SELECT name, url, secret FROM webhooks WHERE id = $1")
+        .bind(id)
+        .fetch_optional(&state.db)
+        .await?
+        .ok_or_else(|| AppError::NotFound("Webhook not found".into()))?;
 
-    let (name, url, secret) = wh.ok_or_else(|| AppError::NotFound("Webhook not found".into()))?;
+    let name: String = wh.try_get("name").unwrap_or_default();
+    let url: String = wh.try_get("url").unwrap_or_default();
+    let secret: String = wh.try_get("secret").unwrap_or_default();
 
     // Spawn the delivery (async)
     let state_clone = state.clone();
@@ -165,7 +168,7 @@ async fn test_webhook(
         }
     });
 
-    Ok(json!({ "sent": true }).into())
+    Ok(json!({ "sent": rows_to_json(&true) }).into())
 }
 
 async fn list_deliveries(
@@ -179,7 +182,7 @@ async fn list_deliveries(
     .bind(id)
     .fetch_all(&state.db)
     .await?;
-    Ok(json!({ "deliveries": deliveries }).into())
+    Ok(json!({ "deliveries": rows_to_json(&deliveries) }).into())
 }
 
 async fn get_delivery(
@@ -192,7 +195,7 @@ async fn get_delivery(
         .fetch_optional(&state.db)
         .await?
         .ok_or_else(|| AppError::NotFound("Delivery not found".into()))?;
-    Ok(Json(json!(d)))
+    Ok(Json(crate::services::db_json::row_to_json(&d)))
 }
 
 async fn redeliver(
@@ -200,14 +203,15 @@ async fn redeliver(
     _user: AuthUser,
     Path(delivery_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, AppError> {
-    let d: Option<(Uuid, String, String, String)> = sqlx::query_as(
-        "SELECT webhook_id, request_body, event, url FROM webhook_deliveries WHERE id = $1"
-    )
-    .bind(delivery_id)
-    .fetch_optional(&state.db)
-    .await?;
+    let d = sqlx::query("SELECT webhook_id, request_body, event FROM webhook_deliveries WHERE id = $1")
+        .bind(delivery_id)
+        .fetch_optional(&state.db)
+        .await?
+        .ok_or_else(|| AppError::NotFound("Delivery not found".into()))?;
 
-    let (webhook_id, body, event, url) = d.ok_or_else(|| AppError::NotFound("Delivery not found".into()))?;
+    let webhook_id: Uuid = d.try_get("webhook_id").unwrap_or_default();
+    let body: String = d.try_get("request_body").unwrap_or_default();
+    let event: String = d.try_get("event").unwrap_or_default();
 
     let state_clone = state.clone();
     tokio::spawn(async move {

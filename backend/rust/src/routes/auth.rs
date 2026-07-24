@@ -14,6 +14,7 @@ use axum::{
     Json, Router,
 };
 use serde_json::json;
+use sqlx::Row;
 use uuid::Uuid;
 
 use crate::{
@@ -106,20 +107,16 @@ async fn verify_2fa(
     State(state): State<SharedState>,
     Json(req): Json<Verify2faRequest>,
 ) -> Result<Json<LoginResponse>, AppError> {
-    let pending: Option<(Uuid,)> = sqlx::query_as("SELECT user_id FROM pending_2fa WHERE token = $1 AND expires_at > NOW()")
+    let pending = sqlx::query("SELECT user_id FROM pending_2fa WHERE token = $1 AND expires_at > NOW()")
         .bind(&req.session_token)
         .fetch_optional(&state.db)
         .await?
-        .ok_or_else(|| AppError::Unauthorized("Invalid or expired session".into()))
-        .and_then(|o| Ok(Some(o)));
+        .ok_or_else(|| AppError::Unauthorized("Invalid or expired session".into()))?;
 
-    let pending = match pending {
-        Ok(Some(p)) => p,
-        _ => return Err(AppError::Unauthorized("Invalid or expired session".into())),
-    };
+    let user_id: Uuid = pending.try_get("user_id").unwrap_or_default();
 
     let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
-        .bind(pending.0)
+        .bind(user_id)
         .fetch_one(&state.db)
         .await?;
 

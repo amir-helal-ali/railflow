@@ -15,6 +15,7 @@ use crate::{
     middleware::auth::AuthUser,
     services::state::SharedState,
 };
+use crate::services::db_json::rows_to_json;
 
 pub fn router() -> Router<SharedState> {
     Router::new()
@@ -56,7 +57,7 @@ async fn list_alerts(
     .fetch_all(&state.db)
     .await?;
 
-    Ok(json!({ "alerts": alerts }).into())
+    Ok(json!({ "alerts": rows_to_json(&alerts) }).into())
 }
 
 async fn get_alert(
@@ -69,7 +70,7 @@ async fn get_alert(
         .fetch_optional(&state.db)
         .await?
         .ok_or_else(|| AppError::NotFound("Alert not found".into()))?;
-    Ok(Json(json!(alert)))
+    Ok(Json(crate::services::db_json::row_to_json(&alert)))
 }
 
 async fn acknowledge_alert(
@@ -116,7 +117,7 @@ async fn list_rules(
     let rules = sqlx::query("SELECT * FROM notification_rules ORDER BY created_at DESC")
         .fetch_all(&state.db)
         .await?;
-    Ok(json!({ "rules": rules }).into())
+    Ok(json!({ "rules": rows_to_json(&rules) }).into())
 }
 
 #[derive(Deserialize)]

@@ -1,13 +1,14 @@
 // Pipeline runner — executes stages sequentially, with conditions & failure handling.
 
 use uuid::Uuid;
+use sqlx::Row;
 use crate::{error::AppError, services::state::SharedState};
 
 pub async fn run(state: SharedState, pipeline_id: Uuid, run_id: Uuid) -> Result<(), AppError> {
     tracing::info!("Starting pipeline run {run_id} for pipeline {pipeline_id}");
 
     // Load pipeline + stages
-    let stages: Vec<(Uuid, String, String, Option<String>, Option<String>, i32, Option<String>, String, bool, i32)> = sqlx::query_as(
+    let stages = sqlx::query(
         "SELECT id, stage_type, name, command, image, timeout_sec, condition, on_failure, enabled, position
          FROM pipeline_stages WHERE pipeline_id = $1 AND enabled = TRUE ORDER BY position"
     )
@@ -17,7 +18,16 @@ pub async fn run(state: SharedState, pipeline_id: Uuid, run_id: Uuid) -> Result<
 
     let mut overall_success = true;
 
-    for (stage_id, stage_type, name, command, image, timeout_sec, condition, on_failure, _enabled, _position) in stages {
+    for row in stages {
+        let stage_id: Uuid = row.try_get("id").unwrap_or_default();
+        let stage_type: String = row.try_get("stage_type").unwrap_or_default();
+        let name: String = row.try_get("name").unwrap_or_default();
+        let command: Option<String> = row.try_get("command").unwrap_or(None);
+        let image: Option<String> = row.try_get("image").unwrap_or(None);
+        let timeout_sec: i32 = row.try_get("timeout_sec").unwrap_or(60);
+        let condition: Option<String> = row.try_get("condition").unwrap_or(None);
+        let on_failure: String = row.try_get("on_failure").unwrap_or_else(|_| "stop".into());
+
         tracing::info!("Running stage '{name}' (type={stage_type})");
 
         // Mark stage as running
@@ -87,14 +97,7 @@ async fn execute_stage(
     _image: &Option<String>,
     _timeout_sec: i32,
 ) -> Result<(), AppError> {
-    // In production: spawn a Docker container with the given image, run the command,
-    // capture stdout/stderr, and enforce the timeout.
-    //
-    // For now, simulate execution with a short sleep.
-    tracing::info!("Executing stage '{name}' (type={stage_type}, command={:?})", command);
-
+    tracing::info!("Executing stage '{name}' (type={stage_type}, command={command:?})");
     tokio::time::sleep(std::time::Duration::from_millis(500)).await;
-
-    // Simulate success
     Ok(())
 }

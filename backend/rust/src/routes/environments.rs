@@ -15,6 +15,7 @@ use crate::{
     middleware::auth::AuthUser,
     services::state::SharedState,
 };
+use crate::services::db_json::rows_to_json;
 
 pub fn router() -> Router<SharedState> {
     Router::new()
@@ -62,7 +63,7 @@ async fn list_environments(
             .await?
     };
 
-    Ok(json!({ "environments": envs }).into())
+    Ok(json!({ "environments": rows_to_json(&envs) }).into())
 }
 
 async fn create_environment(
@@ -121,7 +122,7 @@ async fn get_environment(
         .fetch_optional(&state.db)
         .await?
         .ok_or_else(|| AppError::NotFound("Environment not found".into()))?;
-    Ok(Json(json!(env)))
+    Ok(Json(crate::services::db_json::row_to_json(&env)))
 }
 
 async fn delete_environment(

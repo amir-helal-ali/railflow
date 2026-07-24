@@ -5,6 +5,7 @@
 
 use chrono::Utc;
 use serde_json::json;
+use sqlx::Row;
 use uuid::Uuid;
 
 use crate::{
@@ -75,12 +76,11 @@ pub async fn run_pipeline(
     }
 
     // Mark deployment as done
-    let duration_ms = Utc::now().timestamp_millis()
-        - sqlx::query_scalar::<_, chrono::DateTime<Utc>>("SELECT started_at FROM deployments WHERE id = $1")
-            .bind(deployment_id)
-            .fetch_one(&state.db)
-            .await?
-            .timestamp_millis();
+    let started_at: chrono::DateTime<Utc> = sqlx::query_scalar("SELECT started_at FROM deployments WHERE id = $1")
+        .bind(deployment_id)
+        .fetch_one(&state.db)
+        .await?;
+    let duration_ms = Utc::now().timestamp_millis() - started_at.timestamp_millis();
 
     sqlx::query(
         "UPDATE deployments SET status = 'done', stage = 'done', finished_at = NOW(), duration_ms = $1 WHERE id = $2"
@@ -160,16 +160,16 @@ async fn stage_start(state: &SharedState, project: &crate::models::Project) -> R
     tracing::info!("Starting container for project {}", project.id);
 
     // Pull env variables
-    let env_vars: Vec<(String, String)> = sqlx::query_as(
-        "SELECT key, value FROM env_variables WHERE project_id = $1"
-    )
-    .bind(project.id)
-    .fetch_all(&state.db)
-    .await?
-    .into_iter()
-    .collect();
+    let env_rows = sqlx::query("SELECT key, value FROM env_variables WHERE project_id = $1")
+        .bind(project.id)
+        .fetch_all(&state.db)
+        .await?;
 
-    let env: Vec<String> = env_vars.iter().map(|(k, v)| format!("{k}={v}")).collect();
+    let env: Vec<String> = env_rows.iter().map(|row| {
+        let k: String = row.try_get("key").unwrap_or_default();
+        let v: String = row.try_get("value").unwrap_or_default();
+        format!("{k}={v}")
+    }).collect();
 
     // Build image URL
     let image = format!("ghcr.io/{}:{}", project.repo, project.branch);

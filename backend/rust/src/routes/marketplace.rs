@@ -14,6 +14,7 @@ use crate::{
     middleware::auth::AuthUser,
     services::state::SharedState,
 };
+use crate::services::db_json::rows_to_json;
 
 pub fn router() -> Router<SharedState> {
     Router::new()
@@ -155,7 +156,8 @@ async fn get_edge_config(
         .bind(id)
         .fetch_optional(&state.db)
         .await?;
-    Ok(Json(json!({ "config": config })))
+    let config_json = config.as_ref().map(|c| crate::services::db_json::row_to_json(c));
+    Ok(Json(json!({ "config": config_json })))
 }
 
 #[derive(Deserialize)]
@@ -225,7 +227,7 @@ async fn list_streams(
     let streams = sqlx::query("SELECT * FROM log_streams ORDER BY created_at DESC")
         .fetch_all(&state.db)
         .await?;
-    Ok(json!({ "streams": streams }).into())
+    Ok(json!({ "streams": rows_to_json(&streams) }).into())
 }
 
 #[derive(Deserialize)]

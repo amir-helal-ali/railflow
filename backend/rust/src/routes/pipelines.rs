@@ -15,6 +15,7 @@ use crate::{
     middleware::auth::AuthUser,
     services::state::SharedState,
 };
+use crate::services::db_json::rows_to_json;
 
 pub fn router() -> Router<SharedState> {
     Router::new()
@@ -46,7 +47,7 @@ async fn list_pipelines(
             .fetch_all(&state.db)
             .await?
     };
-    Ok(json!({ "pipelines": pipes }).into())
+    Ok(json!({ "pipelines": rows_to_json(&pipes) }).into())
 }
 
 async fn get_pipeline(
@@ -63,7 +64,7 @@ async fn get_pipeline(
         .bind(id)
         .fetch_all(&state.db)
         .await?;
-    Ok(json!({ "pipeline": pipe, "stages": stages }).into())
+    Ok(json!({ "pipeline": crate::services::db_json::row_to_json(&pipe), "stages": rows_to_json(&stages) }).into())
 }
 
 #[derive(Deserialize)]
@@ -173,7 +174,7 @@ async fn list_runs(
         .bind(id)
         .fetch_all(&state.db)
         .await?;
-    Ok(json!({ "runs": runs }).into())
+    Ok(json!({ "runs": rows_to_json(&runs) }).into())
 }
 
 #[derive(Deserialize)]

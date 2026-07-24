@@ -1,5 +1,6 @@
 pub mod auth;
 pub mod config;
+pub mod db_json;
 pub mod deploy;
 pub mod docker;
 pub mod github;
