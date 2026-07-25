@@ -15,6 +15,12 @@ import {
   AlertTriangle,
   CheckCircle2,
   Clock,
+  Plus,
+  TerminalSquare,
+  Code2,
+  Zap,
+  Wifi,
+  TrendingUp,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useRouter } from "@/lib/router";
@@ -24,16 +30,19 @@ import {
   mockDeployments,
   mockServerInfo,
   mockDockerEvents,
+  mockActivity,
   generateMultiSeries,
 } from "@/lib/mock-data";
-import { MetricCard, StatusBadge, SectionHeader, Sparkline } from "@/components/dashboard/shared";
+import { MetricCard, StatusBadge, SectionHeader, Sparkline, ProgressBar } from "@/components/dashboard/shared";
 import { AreaTimeChart, BarCountChart, RadialGauge } from "@/components/charts";
 import { formatUptime, timeAgo, useInterval } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { useNotify } from "@/components/dashboard/Toaster";
 
 export function DashboardView() {
   const { t, locale } = useI18n();
   const { navigate } = useRouter();
+  const notify = useNotify();
 
   // Generate series only on client to avoid hydration mismatch from Math.random
   const [series, setSeries] = React.useState<ReturnType<typeof generateMultiSeries> | null>(null);
@@ -41,6 +50,22 @@ export function DashboardView() {
     setSeries(generateMultiSeries());
   }, []);
   useInterval(() => setSeries(generateMultiSeries()), 10_000);
+
+  // Live CPU/RAM/Disk/Network values for the System Health widget
+  const [live, setLive] = React.useState({
+    cpu: mockServerInfo.cpu.overallUsage,
+    mem: (mockServerInfo.memory.usedGb / mockServerInfo.memory.totalGb) * 100,
+    disk: (mockServerInfo.disk.usedGb / mockServerInfo.disk.totalGb) * 100,
+    net: mockServerInfo.network.interfaces[0].inboundMbps + mockServerInfo.network.interfaces[0].outboundMbps,
+  });
+  useInterval(() => {
+    setLive({
+      cpu: Math.max(5, Math.min(95, mockServerInfo.cpu.overallUsage + (Math.random() - 0.5) * 12)),
+      mem: Math.max(20, Math.min(85, (mockServerInfo.memory.usedGb / mockServerInfo.memory.totalGb) * 100 + (Math.random() - 0.5) * 6)),
+      disk: Math.max(30, Math.min(70, (mockServerInfo.disk.usedGb / mockServerInfo.disk.totalGb) * 100 + (Math.random() - 0.5) * 2)),
+      net: Math.max(50, 800 + Math.random() * 600),
+    });
+  }, 3000);
 
   // Until client-side series are generated, use empty placeholders
   const cpuSeries = series?.cpu;
@@ -88,6 +113,26 @@ export function DashboardView() {
         </div>
       </div>
 
+      {/* NEW: Quick Actions + System Health (top row) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <QuickActionsWidget
+          t={t}
+          onDeploy={() => { navigate({ name: "deployments" }); notify.deployStarted(); }}
+          onNewProject={() => { navigate({ name: "projects" }); notify.projectCreated(); }}
+          onTerminal={() => navigate({ name: "terminal" })}
+          onPlayground={() => navigate({ name: "playground" })}
+          activeDeployments={activeDeployments}
+        />
+        <SystemHealthWidget
+          t={t}
+          cpu={live.cpu}
+          mem={live.mem}
+          disk={live.disk}
+          net={live.net}
+          locale={locale}
+        />
+      </div>
+
       {/* Top metric cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <MetricCard
@@ -110,7 +155,7 @@ export function DashboardView() {
         />
         <MetricCard
           label={t("dashboard.cpuUsage")}
-          value={mockServerInfo.cpu.overallUsage.toFixed(1)}
+          value={live.cpu.toFixed(1)}
           unit="%"
           delta={{ value: 3.2, positive: false }}
           spark={sparkCpu}
@@ -119,7 +164,7 @@ export function DashboardView() {
         />
         <MetricCard
           label={t("dashboard.memoryUsage")}
-          value={((mockServerInfo.memory.usedGb / mockServerInfo.memory.totalGb) * 100).toFixed(0)}
+          value={live.mem.toFixed(0)}
           unit="%"
           delta={{ value: 1.8, positive: false }}
           spark={sparkMem}
@@ -131,7 +176,7 @@ export function DashboardView() {
       {/* Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Resource usage chart - spans 2 cols */}
-        <div className="lg:col-span-2 glass-card p-5">
+        <div className="lg:col-span-2 glass-card glass-card-hover p-5">
           <SectionHeader
             title={t("dashboard.resourceUsage")}
             subtitle={t("server.history")}
@@ -155,7 +200,7 @@ export function DashboardView() {
         </div>
 
         {/* Health score */}
-        <div className="glass-card p-5">
+        <div className="glass-card glass-card-hover p-5">
           <SectionHeader title={t("dashboard.healthScore")} />
           <div className="flex flex-col items-center gap-4 py-4">
             <RadialGauge
@@ -185,7 +230,7 @@ export function DashboardView() {
       {/* Second row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Recent deployments */}
-        <div className="lg:col-span-2 glass-card p-5">
+        <div className="lg:col-span-2 glass-card glass-card-hover p-5">
           <SectionHeader
             title={t("dashboard.recentDeployments")}
             action={
@@ -223,7 +268,7 @@ export function DashboardView() {
         </div>
 
         {/* Top containers */}
-        <div className="glass-card p-5">
+        <div className="glass-card glass-card-hover p-5">
           <SectionHeader
             title={t("dashboard.topContainers")}
             action={
@@ -242,10 +287,10 @@ export function DashboardView() {
               .sort((a, b) => b.stats.cpuPercent - a.stats.cpuPercent)
               .slice(0, 5)
               .map((c) => (
-                <div key={c.id} className="flex items-center gap-3">
+                <div key={c.id} className="flex items-center gap-3 group cursor-pointer" onClick={() => navigate({ name: "containers" })}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium truncate">{c.name}</span>
+                      <span className="text-xs font-medium truncate group-hover:text-violet-300 transition-colors">{c.name}</span>
                       <span className="text-xs text-muted-foreground tabular-nums">{c.stats.cpuPercent.toFixed(1)}%</span>
                     </div>
                     <div className="h-1 rounded-full bg-white/5 overflow-hidden">
@@ -267,13 +312,13 @@ export function DashboardView() {
       {/* Third row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Deployment activity */}
-        <div className="glass-card p-5">
+        <div className="glass-card glass-card-hover p-5">
           <SectionHeader title={t("dashboard.deploymentActivity")} subtitle={t("server.history")} />
           <BarCountChart data={hourlyDeploys} height={160} />
         </div>
 
         {/* System events */}
-        <div className="lg:col-span-2 glass-card p-5">
+        <div className="lg:col-span-2 glass-card glass-card-hover p-5">
           <SectionHeader
             title={t("dashboard.systemEvents")}
             action={
@@ -310,47 +355,248 @@ export function DashboardView() {
         </div>
       </div>
 
-      {/* Server quick stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="glass-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center">
-            <Cpu className="w-5 h-5 text-violet-300" />
+      {/* NEW: Recent Activity timeline */}
+      <RecentActivityWidget t={t} locale={locale} onViewAll={() => navigate({ name: "activity" })} />
+    </div>
+  );
+}
+
+/* ============================================================ *
+ *  Quick Actions widget — deploy / new project / terminal /    *
+ *  API playground shortcuts + active deployments counter.      *
+ * ============================================================ */
+function QuickActionsWidget({
+  t,
+  onDeploy,
+  onNewProject,
+  onTerminal,
+  onPlayground,
+  activeDeployments,
+}: {
+  t: (k: string) => string;
+  onDeploy: () => void;
+  onNewProject: () => void;
+  onTerminal: () => void;
+  onPlayground: () => void;
+  activeDeployments: number;
+}) {
+  const actions = [
+    { label: t("dashboard.action.deploy"), icon: Rocket, onClick: onDeploy, gradient: "from-violet-500/20 to-cyan-400/10", iconColor: "text-violet-300" },
+    { label: t("dashboard.action.newProject"), icon: Plus, onClick: onNewProject, gradient: "from-emerald-500/20 to-cyan-400/10", iconColor: "text-emerald-300" },
+    { label: t("dashboard.action.terminal"), icon: TerminalSquare, onClick: onTerminal, gradient: "from-cyan-500/20 to-violet-400/10", iconColor: "text-cyan-300" },
+    { label: t("dashboard.action.playground"), icon: Code2, onClick: onPlayground, gradient: "from-amber-500/20 to-violet-400/10", iconColor: "text-amber-300" },
+  ];
+
+  return (
+    <div className="glass-card glass-card-hover p-5">
+      <SectionHeader
+        title={t("dashboard.quickActions")}
+        action={
+          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+            <span className="relative inline-flex">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-violet-400" />
+              <span className="absolute inset-0 rounded-full animate-ping opacity-60 bg-violet-400" />
+            </span>
+            <span>{activeDeployments} {t("statusBar.activeDeployments").toLowerCase()}</span>
           </div>
-          <div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider">CPU</div>
-            <div className="text-sm font-semibold tabular-nums">{mockServerInfo.cpu.cores} cores</div>
-            <div className="text-[10px] text-muted-foreground">{mockServerInfo.cpu.model.split(" ").slice(0, 3).join(" ")}</div>
+        }
+      />
+      <div className="grid grid-cols-2 gap-2.5">
+        {actions.map((a) => (
+          <button
+            key={a.label}
+            onClick={a.onClick}
+            className={cn(
+              "group relative p-3 rounded-lg bg-gradient-to-br border border-white/5 hover:border-white/20 transition-all overflow-hidden text-start",
+              a.gradient,
+            )}
+          >
+            <div className="absolute inset-0 bg-white/0 group-hover:bg-white/[0.03] transition-colors" />
+            <a.icon className={cn("w-5 h-5 mb-2 transition-transform group-hover:scale-110", a.iconColor)} />
+            <div className="text-xs font-medium relative">{a.label}</div>
+            <ArrowUpRight className="w-3 h-3 absolute top-2.5 end-2.5 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </button>
+        ))}
+      </div>
+      <div className="mt-3 flex items-center justify-between text-[10px] text-muted-foreground/70">
+        <span className="flex items-center gap-1.5">
+          <Zap className="w-3 h-3 text-violet-300" fill="currentColor" />
+          {t("shortcuts.quickDeploy")}
+        </span>
+        <kbd className="px-1.5 py-0.5 rounded bg-white/5 border border-white/5 font-mono">N</kbd>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================ *
+ *  System Health widget — compact CPU / RAM / Disk / Network    *
+ *  combined view with live progress bars and sparkline.         *
+ * ============================================================ */
+function SystemHealthWidget({
+  t,
+  cpu,
+  mem,
+  disk,
+  net,
+  locale,
+}: {
+  t: (k: string) => string;
+  cpu: number;
+  mem: number;
+  disk: number;
+  net: number;
+  locale: "ar" | "en";
+}) {
+  const metrics = [
+    { label: t("dashboard.cpu"), value: cpu, max: 100, unit: "%", icon: Cpu, color: "oklch(0.72 0.22 295)" },
+    { label: t("dashboard.ram"), value: mem, max: 100, unit: "%", icon: MemoryStick, color: "oklch(0.78 0.17 190)" },
+    { label: t("dashboard.disk"), value: disk, max: 100, unit: "%", icon: HardDrive, color: "oklch(0.75 0.2 145)" },
+    { label: t("dashboard.network"), value: net, max: 1500, unit: " Mbps", icon: Wifi, color: "oklch(0.78 0.18 75)", display: net.toFixed(0) },
+  ];
+
+  return (
+    <div className="lg:col-span-2 glass-card glass-card-hover p-5">
+      <SectionHeader
+        title={t("dashboard.systemHealth")}
+        action={
+          <div className="flex items-center gap-1.5 text-[10px] text-emerald-400">
+            <CheckCircle2 className="w-3 h-3" />
+            <span>{t("dashboard.allSystemsOperational")}</span>
           </div>
-        </div>
-        <div className="glass-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center">
-            <MemoryStick className="w-5 h-5 text-cyan-300" />
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider">RAM</div>
-            <div className="text-sm font-semibold tabular-nums">{mockServerInfo.memory.usedGb.toFixed(1)} / {mockServerInfo.memory.totalGb} GB</div>
-            <div className="text-[10px] text-muted-foreground">{((mockServerInfo.memory.usedGb / mockServerInfo.memory.totalGb) * 100).toFixed(0)}% used</div>
-          </div>
-        </div>
-        <div className="glass-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-            <HardDrive className="w-5 h-5 text-emerald-300" />
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider">DISK</div>
-            <div className="text-sm font-semibold tabular-nums">{mockServerInfo.disk.usedGb} / {mockServerInfo.disk.totalGb} GB</div>
-            <div className="text-[10px] text-muted-foreground">{((mockServerInfo.disk.usedGb / mockServerInfo.disk.totalGb) * 100).toFixed(0)}% used</div>
-          </div>
-        </div>
-        <div className="glass-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-            <ServerIcon className="w-5 h-5 text-amber-300" />
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider">UPTIME</div>
-            <div className="text-sm font-semibold tabular-nums">{formatUptime(mockServerInfo.uptime, locale)}</div>
-            <div className="text-[10px] text-muted-foreground">{mockServerInfo.hostname}</div>
-          </div>
+        }
+      />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {metrics.map((m) => {
+          const pct = Math.min(100, (m.value / m.max) * 100);
+          const isHigh = pct > 75;
+          const isMid = pct > 50;
+          const Icon = m.icon;
+          return (
+            <div
+              key={m.label}
+              className="p-3 rounded-lg bg-white/5 border border-white/5 hover:border-white/15 hover:bg-white/[0.07] transition-all group"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <Icon className={cn("w-3.5 h-3.5 transition-colors", isHigh ? "text-rose-400" : isMid ? "text-amber-400" : "")} style={{ color: !isHigh && !isMid ? m.color : undefined }} />
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{m.label}</span>
+              </div>
+              <div className="flex items-baseline gap-0.5 mb-2">
+                <span className="text-lg font-semibold tabular-nums">{(m.display ?? m.value.toFixed(1))}</span>
+                <span className="text-[10px] text-muted-foreground">{m.unit}</span>
+              </div>
+              <ProgressBar
+                value={m.value}
+                max={m.max}
+                color={isHigh ? "oklch(0.65 0.24 25)" : isMid ? "oklch(0.78 0.18 75)" : m.color}
+                className="h-1"
+              />
+              <div className="mt-1.5 flex items-center justify-between text-[10px] text-muted-foreground/70">
+                <span className="flex items-center gap-0.5">
+                  <TrendingUp className="w-2.5 h-2.5" />
+                  {pct.toFixed(0)}%
+                </span>
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity">{t("common.live")}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-3 flex items-center justify-between text-[10px] text-muted-foreground/70">
+        <span className="flex items-center gap-1.5">
+          <ServerIcon className="w-3 h-3" />
+          {mockServerInfo.hostname} · {mockServerInfo.cpu.cores} cores
+        </span>
+        <span suppressHydrationWarning>{formatUptime(mockServerInfo.uptime, locale)}</span>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================ *
+ *  Recent Activity timeline — vertical timeline of recent      *
+ *  platform events (deploys, container ops, security, etc.).   *
+ * ============================================================ */
+function RecentActivityWidget({
+  t,
+  locale,
+  onViewAll,
+}: {
+  t: (k: string) => string;
+  locale: "ar" | "en";
+  onViewAll: () => void;
+}) {
+  const items = mockActivity.slice(0, 6);
+
+  const categoryColor: Record<string, string> = {
+    deployment: "bg-violet-400",
+    container: "bg-cyan-400",
+    project: "bg-emerald-400",
+    database: "bg-amber-400",
+    auth: "bg-rose-400",
+    settings: "bg-zinc-400",
+    billing: "bg-sky-400",
+  };
+
+  const categoryIcon: Record<string, React.ReactNode> = {
+    deployment: <Rocket className="w-3 h-3" />,
+    container: <Boxes className="w-3 h-3" />,
+    project: <GitBranch className="w-3 h-3" />,
+    database: <HardDrive className="w-3 h-3" />,
+    auth: <CheckCircle2 className="w-3 h-3" />,
+    settings: <Activity className="w-3 h-3" />,
+    billing: <TrendingUp className="w-3 h-3" />,
+  };
+
+  return (
+    <div className="glass-card glass-card-hover p-5">
+      <SectionHeader
+        title={t("dashboard.recentActivity")}
+        action={
+          <button
+            onClick={onViewAll}
+            className="text-xs text-violet-300 hover:text-violet-200 flex items-center gap-1"
+          >
+            {t("dashboard.viewAllActivity")}
+            <ArrowUpRight className="w-3 h-3" />
+          </button>
+        }
+      />
+      <div className="relative">
+        {/* Timeline vertical line */}
+        <div className="absolute top-0 bottom-0 w-px bg-white/5 start-[15px]" aria-hidden />
+        <div className="space-y-3">
+          {items.map((a) => (
+            <div key={a.id} className="relative flex items-start gap-3 ps-1 group">
+              <div
+                className={cn(
+                  "relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0 ring-4 ring-background",
+                  categoryColor[a.category] ?? "bg-zinc-400",
+                )}
+              >
+                {categoryIcon[a.category] ?? <Activity className="w-3 h-3" />}
+              </div>
+              <div className="flex-1 min-w-0 py-0.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {a.actor.avatarUrl ? (
+                    <img src={a.actor.avatarUrl} alt="" className="w-3.5 h-3.5 rounded-full" />
+                  ) : null}
+                  <span className="text-xs font-medium">{a.actor.name}</span>
+                  <span className="text-xs text-muted-foreground">{a.action}</span>
+                  <span className="text-xs font-medium text-violet-300 truncate">{a.resource.name}</span>
+                </div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[10px] text-muted-foreground/70" suppressHydrationWarning>{timeAgo(a.timestamp, locale)}</span>
+                  {a.metadata?.commit && (
+                    <code className="text-[10px] text-muted-foreground bg-white/5 px-1 py-0. rounded font-mono">{a.metadata.commit}</code>
+                  )}
+                  {a.ip && (
+                    <span className="text-[10px] text-muted-foreground/50 font-mono">{a.ip}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

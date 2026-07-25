@@ -3,8 +3,13 @@
 import * as React from "react";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
+import { StatusBar } from "./StatusBar";
+import { Onboarding } from "./Onboarding";
+import { ErrorBoundary } from "./ErrorBoundary";
+import { ShortcutsHelp } from "./ShortcutsHelp";
 import { useRouter } from "@/lib/router";
 import { useI18n } from "@/lib/i18n";
+import { useKeyboardShortcuts, onShortcut } from "@/hooks/use-keyboard-shortcuts";
 import { DashboardView } from "@/components/views/DashboardView";
 import { ProjectsView } from "@/components/views/ProjectsView";
 import { ProjectDetailView } from "@/components/views/ProjectDetailView";
@@ -41,52 +46,63 @@ import { IntegrationsView } from "@/components/views/IntegrationsView";
 import { useLocalStorage } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-/** Error boundary so a runtime error in one view doesn't kill the whole app. */
-class ViewBoundary extends React.Component<
-  { children: React.ReactNode },
-  { error: Error | null }
-> {
-  state = { error: null as Error | null };
-  static getDerivedStateFromError(error: Error) {
-    return { error };
-  }
-  componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error("ViewBoundary caught:", error, info.componentStack);
-  }
-  render() {
-    if (this.state.error) {
-      return (
-        <div className="glass-card p-8 text-center">
-          <p className="text-sm text-rose-400 mb-2">Error rendering this view</p>
-          <pre className="text-xs text-muted-foreground font-mono overflow-auto max-h-32 text-start bg-white/5 p-3 rounded">
-            {this.state.error.message}
-          </pre>
-          <button
-            onClick={() => this.setState({ error: null })}
-            className="mt-3 px-3 py-1.5 rounded bg-white/5 hover:bg-white/10 text-xs"
-          >
-            Retry
-          </button>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
-
 export function AppShell() {
   const { dir } = useI18n();
-  const { view } = useRouter();
+  const { view, navigate } = useRouter();
   const [collapsed, setCollapsed] = useLocalStorage("railflow-sidebar-collapsed", false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = React.useState(false);
+
+  // Activate the global keyboard shortcuts listener
+  useKeyboardShortcuts(true);
+
+  // Toggle sidebar via Cmd/Ctrl + B
+  React.useEffect(() => {
+    return onShortcut("railflow:toggle-sidebar", () => setCollapsed((c) => !c));
+  }, [setCollapsed]);
+
+  // Show shortcuts help via Cmd/Ctrl + /
+  React.useEffect(() => {
+    return onShortcut("railflow:show-shortcuts", () => setShortcutsOpen(true));
+  }, []);
+
+  // Close modals on Esc (handled here as a safety net in case a child didn't)
+  React.useEffect(() => {
+    return onShortcut("railflow:close-modals", () => {
+      setShortcutsOpen(false);
+      setMobileOpen(false);
+    });
+  }, []);
+
+  // G-prefix + single-key navigation
+  React.useEffect(() => {
+    const unsub1 = onShortcut("railflow:go-dashboard", () => navigate({ name: "dashboard" }));
+    const unsub2 = onShortcut("railflow:go-projects", () => navigate({ name: "projects" }));
+    const unsub3 = onShortcut("railflow:go-containers", () => navigate({ name: "containers" }));
+    const unsub4 = onShortcut("railflow:go-deployments", () => navigate({ name: "deployments" }));
+    const unsub5 = onShortcut("railflow:go-server", () => navigate({ name: "server" }));
+    const unsub6 = onShortcut("railflow:go-settings", () => navigate({ name: "settings" }));
+    const unsub7 = onShortcut("railflow:open-terminal", () => navigate({ name: "terminal" }));
+    return () => {
+      unsub1(); unsub2(); unsub3(); unsub4(); unsub5(); unsub6(); unsub7();
+    };
+  }, [navigate]);
 
   // Login view is full-screen, no shell
   if (view.name === "login") {
-    return <LoginView />;
+    return (
+      <>
+        <ErrorBoundary label="Login View">
+          <LoginView />
+        </ErrorBoundary>
+        <Onboarding />
+        <ShortcutsHelp open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+      </>
+    );
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       {/* Desktop sidebar */}
       <div className="hidden lg:block">
         <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
@@ -108,15 +124,15 @@ export function AppShell() {
       {/* Main */}
       <div
         className={cn(
-          "transition-all duration-200",
+          "flex-1 flex flex-col transition-all duration-200",
           collapsed ? "lg:ps-[68px]" : "lg:ps-[248px]",
-          dir === "rtl" && (collapsed ? "lg:pe-[68px] lg:ps-0" : "lg:pe-[248px] lg:ps-0")
+          dir === "rtl" && (collapsed ? "lg:pe-[68px] lg:ps-0" : "lg:pe-[248px] lg:ps-0"),
         )}
       >
         <Topbar onMenuClick={() => setMobileOpen(true)} />
-        <main className="p-4 lg:p-6">
+        <main className="flex-1 p-4 lg:p-6">
           <div className="max-w-[1600px] mx-auto animate-in">
-            <ViewBoundary>
+            <ErrorBoundary label={view.name}>
               {view.name === "dashboard" && <DashboardView />}
               {view.name === "projects" && <ProjectsView />}
               {view.name === "project" && <ProjectDetailView projectId={view.projectId} tab={view.tab} />}
@@ -149,10 +165,15 @@ export function AppShell() {
               {view.name === "metricsExplorer" && <MetricsExplorerView />}
               {view.name === "integrations" && <IntegrationsView />}
               {view.name === "settings" && <SettingsView tab={view.tab} />}
-            </ViewBoundary>
+            </ErrorBoundary>
           </div>
         </main>
+        <StatusBar />
       </div>
+
+      {/* Overlays */}
+      <Onboarding />
+      <ShortcutsHelp open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/dashboard/Toaster";
 import { I18nProvider } from "@/lib/i18n";
 import { RouterProvider } from "@/lib/router";
 import { AppShell } from "@/components/dashboard/AppShell";
@@ -24,8 +24,8 @@ export default function RootLayout({
           <RouterProvider>
             <AppShell />
           </RouterProvider>
+          <Toaster />
         </I18nProvider>
-        <Toaster />
       </body>
     </html>
   );

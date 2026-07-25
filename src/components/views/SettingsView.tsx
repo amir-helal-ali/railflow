@@ -19,6 +19,8 @@ import {
   Check,
   AlertCircle,
   QrCode,
+  RotateCcw,
+  Sparkles,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { mockUser, mockApiKeys, mockSessions } from "@/lib/mock-data";
@@ -27,9 +29,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Slider } from "@/components/ui/slider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import {
+  useAppearance,
+  ACCENT_VALUES,
+  type AccentColor,
+  type Density,
+} from "@/hooks/use-appearance";
+import { useNotify } from "@/components/dashboard/Toaster";
 
 export function SettingsView({ tab: initialTab }: { tab?: string }) {
   const { t } = useI18n();
@@ -421,45 +431,267 @@ function BillingTab() {
 
 function AppearanceTab() {
   const { t, locale, setLocale } = useI18n();
+  const [prefs, setPrefs, resetPrefs] = useAppearance();
+  const notify = useNotify();
+
+  const accentColors: { id: AccentColor; labelKey: string }[] = [
+    { id: "violet", labelKey: "settings.themeColor.violet" },
+    { id: "cyan", labelKey: "settings.themeColor.cyan" },
+    { id: "emerald", labelKey: "settings.themeColor.emerald" },
+    { id: "amber", labelKey: "settings.themeColor.amber" },
+  ];
+
+  const densities: { id: Density; labelKey: string }[] = [
+    { id: "compact", labelKey: "settings.density.compact" },
+    { id: "comfortable", labelKey: "settings.density.comfortable" },
+  ];
+
+  const fontPct = Math.round(prefs.fontScale * 100);
+
   return (
-    <div className="glass-card p-5">
-      <SectionHeader title={t("settings.appearance")} />
-      <div className="space-y-4">
-        <div>
-          <label className="text-xs font-medium text-muted-foreground mb-2 block">{t("settings.language")}</label>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={() => setLocale("ar")}
-              className={cn(
-                "p-3 rounded-lg border text-sm font-medium transition-all flex items-center gap-2",
-                locale === "ar" ? "border-violet-400 bg-violet-500/10 text-violet-300" : "border-white/10 bg-white/5 hover:border-white/20"
-              )}
+    <div className="space-y-4">
+      <div className="glass-card p-5">
+        <SectionHeader
+          title={t("settings.appearance")}
+          action={
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                resetPrefs();
+                notify.info(t("settings.appearance.reset"));
+              }}
+              className="text-xs gap-1.5"
             >
-              <Globe className="w-4 h-4" />
-              العربية (RTL)
-              {locale === "ar" && <Check className="w-3 h-3 ms-auto" />}
-            </button>
-            <button
-              onClick={() => setLocale("en")}
-              className={cn(
-                "p-3 rounded-lg border text-sm font-medium transition-all flex items-center gap-2",
-                locale === "en" ? "border-violet-400 bg-violet-500/10 text-violet-300" : "border-white/10 bg-white/5 hover:border-white/20"
-              )}
-            >
-              <Globe className="w-4 h-4" />
-              English (LTR)
-              {locale === "en" && <Check className="w-3 h-3 ms-auto" />}
-            </button>
+              <RotateCcw className="w-3.5 h-3.5" />
+              {t("settings.appearance.reset")}
+            </Button>
+          }
+        />
+
+        <div className="space-y-6">
+          {/* Language */}
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-2 block">
+              {t("settings.language")}
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setLocale("ar")}
+                className={cn(
+                  "p-3 rounded-lg border text-sm font-medium transition-all flex items-center gap-2",
+                  locale === "ar"
+                    ? "border-violet-400 bg-violet-500/10 text-violet-300"
+                    : "border-white/10 bg-white/5 hover:border-white/20",
+                )}
+              >
+                <Globe className="w-4 h-4" />
+                العربية (RTL)
+                {locale === "ar" && <Check className="w-3 h-3 ms-auto" />}
+              </button>
+              <button
+                onClick={() => setLocale("en")}
+                className={cn(
+                  "p-3 rounded-lg border text-sm font-medium transition-all flex items-center gap-2",
+                  locale === "en"
+                    ? "border-violet-400 bg-violet-500/10 text-violet-300"
+                    : "border-white/10 bg-white/5 hover:border-white/20",
+                )}
+              >
+                <Globe className="w-4 h-4" />
+                English (LTR)
+                {locale === "en" && <Check className="w-3 h-3 ms-auto" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Accent color */}
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-2 block">
+              {t("settings.themeColor")}
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {accentColors.map((c) => {
+                const active = prefs.accent === c.id;
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => setPrefs({ accent: c.id })}
+                    className={cn(
+                      "group relative p-3 rounded-lg border text-start transition-all overflow-hidden",
+                      active
+                        ? "border-white/20 bg-white/[0.07]"
+                        : "border-white/10 bg-white/5 hover:border-white/20",
+                    )}
+                    style={
+                      active
+                        ? { boxShadow: `0 0 0 1px ${ACCENT_VALUES[c.id]}, 0 0 16px ${ACCENT_VALUES[c.id]}33` }
+                        : undefined
+                    }
+                  >
+                    <div
+                      className="w-8 h-8 rounded-lg mb-2 transition-transform group-hover:scale-110"
+                      style={{
+                        background: `linear-gradient(135deg, ${ACCENT_VALUES[c.id]}, ${ACCENT_VALUES[c.id]}99)`,
+                        boxShadow: `0 0 12px ${ACCENT_VALUES[c.id]}66`,
+                      }}
+                    />
+                    <div className="text-xs font-medium">{t(c.labelKey)}</div>
+                    {active && (
+                      <div className="absolute top-2 end-2 w-4 h-4 rounded-full bg-white/10 flex items-center justify-center">
+                        <Check className="w-3 h-3" style={{ color: ACCENT_VALUES[c.id] }} />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Density */}
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-2 block">
+              {t("settings.density")}
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {densities.map((d) => {
+                const active = prefs.density === d.id;
+                return (
+                  <button
+                    key={d.id}
+                    onClick={() => setPrefs({ density: d.id })}
+                    className={cn(
+                      "p-3 rounded-lg border text-sm font-medium transition-all flex items-center gap-2",
+                      active
+                        ? "border-violet-400 bg-violet-500/10 text-violet-300"
+                        : "border-white/10 bg-white/5 hover:border-white/20",
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "rounded border border-white/10",
+                        d.id === "compact" ? "w-4 h-3" : "w-5 h-4",
+                      )}
+                      style={active ? { background: ACCENT_VALUES[prefs.accent] } : undefined}
+                    />
+                    {t(d.labelKey)}
+                    {active && <Check className="w-3 h-3 ms-auto" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Animations */}
+          <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-violet-300" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">{t("settings.animations")}</p>
+                <p className="text-xs text-muted-foreground">{t("settings.animations.desc")}</p>
+              </div>
+            </div>
+            <Switch
+              checked={prefs.animations}
+              onCheckedChange={(v) => setPrefs({ animations: v })}
+            />
+          </div>
+
+          {/* Font size */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-medium text-muted-foreground">
+                {t("settings.fontSize")}
+              </label>
+              <span className="text-xs font-mono tabular-nums px-1.5 py-0.5 rounded bg-white/5">
+                {fontPct}%
+              </span>
+            </div>
+            <div className="px-1">
+              <Slider
+                value={[prefs.fontScale * 100]}
+                min={87}
+                max={112}
+                step={1}
+                onValueChange={(v) => setPrefs({ fontScale: v[0] / 100 })}
+                className="w-full"
+              />
+              <div className="flex justify-between mt-1.5 text-[10px] text-muted-foreground/60">
+                <span>A</span>
+                <span style={{ fontSize: "12px" }}>A</span>
+                <span style={{ fontSize: "14px" }}>A</span>
+              </div>
+            </div>
           </div>
         </div>
-        <div>
-          <label className="text-xs font-medium text-muted-foreground mb-2 block">Theme</label>
-          <div className="p-3 rounded-lg bg-white/5 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium">Dark Premium</p>
-              <p className="text-xs text-muted-foreground">Deep void background with neon violet accents</p>
+      </div>
+
+      {/* Live preview */}
+      <div className="glass-card p-5">
+        <SectionHeader title={t("settings.appearance.preview")} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="p-4 rounded-lg bg-white/5 border border-white/5">
+            <div className="flex items-center gap-2 mb-3">
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+                style={{ background: ACCENT_VALUES[prefs.accent] }}
+              >
+                RF
+              </div>
+              <div>
+                <p className="text-sm font-medium">{t("app.name")}</p>
+                <p className="text-[10px] text-muted-foreground">{t("app.tagline")}</p>
+              </div>
             </div>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">default</span>
+            <div className="space-y-1.5">
+              <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                <div
+                  className="h-full rounded-full"
+                  style={{ width: "67%", background: ACCENT_VALUES[prefs.accent] }}
+                />
+              </div>
+              <div className="flex gap-1.5">
+                <span
+                  className="text-[10px] px-1.5 py-0.5 rounded font-medium"
+                  style={{
+                    background: `${ACCENT_VALUES[prefs.accent]}22`,
+                    color: ACCENT_VALUES[prefs.accent],
+                  }}
+                >
+                  {t("status.running")}
+                </span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground">
+                  {t("common.live")}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="p-4 rounded-lg bg-white/5 border border-white/5 flex flex-col gap-2">
+            <Button
+              size="sm"
+              className="w-full border-0 text-white"
+              style={{ background: ACCENT_VALUES[prefs.accent] }}
+              onClick={() => notify.success(t("toast.saved"))}
+            >
+              {t("common.save")}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full"
+              onClick={() => notify.info(t("common.refresh"))}
+            >
+              {t("common.refresh")}
+            </Button>
+            <div className="text-[10px] text-muted-foreground text-center mt-1">
+              {prefs.density === "compact" ? t("settings.density.compact") : t("settings.density.comfortable")}
+              {" · "}
+              {fontPct}%
+              {" · "}
+              {prefs.animations ? t("settings.animations") : "—"}
+            </div>
           </div>
         </div>
       </div>

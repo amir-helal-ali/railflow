@@ -260,3 +260,41 @@
   .scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
 }
+
+/* ---------- Appearance preferences ---------- */
+
+/* Font size scaling — applies to the whole document. */
+:root {
+  --font-scale: 1;
+}
+html {
+  font-size: calc(16px * var(--font-scale));
+}
+
+/* Density: compact shrinks vertical rhythm in cards/lists. */
+html[data-density="compact"] .glass-card {
+  padding: 0.5rem;
+}
+html[data-density="compact"] {
+  --radius: 0.5rem;
+}
+
+/* Animations: when off, disable transitions & keyframe animations. */
+html[data-animations="off"] *,
+html[data-animations="off"] *::before,
+html[data-animations="off"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Sonner toast custom styling — accent border + glass background. */
+.railflow-toast {
+  border-inline-start-width: 3px;
+}
+.railflow-toast [data-icon] {
+  display: inline-flex;
+  align-items: center;
+}
+
