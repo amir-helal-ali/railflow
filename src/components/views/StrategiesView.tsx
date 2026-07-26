@@ -7,7 +7,6 @@ import {
   Activity,
   Shield,
   RefreshCw,
-  Layers,
   Split,
   Timer,
   TrendingUp,
@@ -16,7 +15,7 @@ import {
 import { useI18n } from "@/lib/i18n";
 import { useRouter } from "@/lib/router";
 import { mockProjects, mockDeployStrategies } from "@/lib/mock-data";
-import { SectionHeader, StatusBadge } from "@/components/dashboard/shared";
+import { SectionHeader } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -31,7 +30,7 @@ const strategyMeta: Record<DeployStrategy, { icon: React.ElementType; color: str
 
 export function StrategiesView() {
   const { t } = useI18n();
-  const { navigate } = useRouter();
+  const { navigate: _navigate } = useRouter();
   const [selectedProjectId, setSelectedProjectId] = React.useState(mockProjects[0].id);
   const [strategy, setStrategy] = React.useState<DeployStrategy>(mockDeployStrategies[0]?.strategy ?? "rolling");
   const [config, setConfig] = React.useState(mockDeployStrategies[0] ?? mockDeployStrategies[0]);

@@ -18,7 +18,7 @@ import {
 import { useI18n } from "@/lib/i18n";
 import { useRouter } from "@/lib/router";
 import { mockEnvironments, mockProjects } from "@/lib/mock-data";
-import { StatusBadge, SectionHeader, EmptyState } from "@/components/dashboard/shared";
+import { StatusBadge, EmptyState } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/button";
 import { timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";

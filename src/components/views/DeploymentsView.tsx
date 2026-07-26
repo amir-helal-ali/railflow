@@ -3,9 +3,8 @@
 import * as React from "react";
 import { Rocket, Filter, GitBranch, ExternalLink, AlertTriangle } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
-import { useRouter } from "@/lib/router";
 import { mockDeployments } from "@/lib/mock-data";
-import { StatusBadge, SectionHeader, EmptyState } from "@/components/dashboard/shared";
+import { StatusBadge, EmptyState } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/button";
 import { timeAgo, formatDuration } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -13,7 +12,6 @@ import type { Deployment } from "@/lib/types";
 
 export function DeploymentsView() {
   const { t, locale } = useI18n();
-  const { navigate } = useRouter();
   const [filter, setFilter] = React.useState<"all" | "done" | "failed" | "building">("all");
   const [selected, setSelected] = React.useState<Deployment | null>(mockDeployments[0]);
 
@@ -107,7 +105,7 @@ export function DeploymentsView() {
 }
 
 function DeploymentDetail({ deployment }: { deployment: Deployment }) {
-  const { t, locale } = useI18n();
+  const { t, locale: _locale } = useI18n();
   const stageLabels: Record<string, string> = {
     queued: t("deployments.stage.queued"),
     cloning: t("deployments.stage.cloning"),

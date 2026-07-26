@@ -5,17 +5,13 @@ import {
   Plus,
   Activity,
   Globe,
-  Clock,
-  TrendingUp,
-  TrendingDown,
   CheckCircle2,
   XCircle,
   AlertTriangle,
-  Zap,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { mockApiHealthChecks, generateApiMetrics } from "@/lib/mock-data";
-import { SectionHeader, ProgressBar, Sparkline } from "@/components/dashboard/shared";
+import { SectionHeader } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/button";
 import { LineTimeChart } from "@/components/charts";
 import { timeAgo } from "@/lib/format";

@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { mockTeam, mockInvites, mockUser } from "@/lib/mock-data";
-import { SectionHeader, StatusBadge } from "@/components/dashboard/shared";
+import { SectionHeader } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -37,7 +37,7 @@ const roleConfig: Record<Role, { color: string; icon: React.ElementType; descKey
 };
 
 export function TeamView() {
-  const { t, locale } = useI18n();
+  const { t, locale: _locale } = useI18n();
   const [showInvite, setShowInvite] = React.useState(false);
 
   return (

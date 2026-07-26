@@ -8,8 +8,6 @@ import {
   Trash2,
   Download,
   Plus,
-  Save,
-  Filter,
   Activity,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
@@ -29,7 +27,7 @@ const levelConfig: Record<AggregatedLog["level"], { color: string; bg: string; l
 };
 
 export function LogsAggView() {
-  const { t, locale } = useI18n();
+  const { t, locale: _locale } = useI18n();
   const [logs, setLogs] = React.useState<AggregatedLog[]>(() => generateAggregatedLogs(80));
   const [filter, setFilter] = React.useState("");
   const [levelFilter, setLevelFilter] = React.useState<"all" | AggregatedLog["level"]>("all");

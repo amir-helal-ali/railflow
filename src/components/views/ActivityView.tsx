@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { mockActivity } from "@/lib/mock-data";
-import { SectionHeader } from "@/components/dashboard/shared";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";

@@ -9,8 +9,6 @@ import {
   Lock,
   Key,
   AlertTriangle,
-  Eye,
-  EyeOff,
   Plus,
   Play,
   CheckCircle2,
@@ -21,7 +19,7 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { mockSecurityFindings, mockSecurityScans, mockFirewallRules } from "@/lib/mock-data";
-import { StatusBadge, SectionHeader } from "@/components/dashboard/shared";
+import { SectionHeader } from "@/components/dashboard/shared";
 import { RadialGauge } from "@/components/charts";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";

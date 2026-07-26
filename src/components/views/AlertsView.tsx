@@ -21,10 +21,9 @@ import { mockAlerts, mockNotificationRules } from "@/lib/mock-data";
 import { SectionHeader, EmptyState } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { Alert, AlertSeverity, AlertCategory } from "@/lib/types";
+import type { AlertSeverity, AlertCategory } from "@/lib/types";
 
 const severityConfig: Record<AlertSeverity, { color: string; bg: string; border: string; icon: React.ElementType }> = {
   info: { color: "text-sky-300", bg: "bg-sky-500/5", border: "border-sky-500/20", icon: Info },

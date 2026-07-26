@@ -8,8 +8,6 @@ import {
   ExternalLink,
   Rocket,
   RotateCcw,
-  Settings as SettingsIcon,
-  Terminal,
   AlertTriangle,
   Plus,
   Eye,
@@ -18,9 +16,7 @@ import {
   Trash2,
   Download,
   Search,
-  Play,
   Circle,
-  ChevronDown,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useRouter } from "@/lib/router";
@@ -35,7 +31,7 @@ import { cn } from "@/lib/utils";
 import type { LogEntry, Deployment } from "@/lib/types";
 
 export function ProjectDetailView({ projectId, tab: initialTab }: { projectId: string; tab?: string }) {
-  const { t, locale } = useI18n();
+  const { t, locale: _locale } = useI18n();
   const { navigate } = useRouter();
   const project = mockProjects.find((p) => p.id === projectId);
   const [tab, setTab] = React.useState(initialTab || "overview");
@@ -433,7 +429,7 @@ function ConfigurationTab({ projectId }: { projectId: string }) {
 
 function EnvironmentTab() {
   const { t } = useI18n();
-  const [vars, setVars] = React.useState(mockEnvVariables);
+  const [vars, _setVars] = React.useState(mockEnvVariables);
   const [revealed, setRevealed] = React.useState<Set<string>>(new Set());
   const [copied, setCopied] = React.useState<string | null>(null);
 

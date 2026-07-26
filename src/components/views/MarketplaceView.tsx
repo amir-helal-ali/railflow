@@ -9,7 +9,6 @@ import {
   ExternalLink,
   Clock,
   CheckCircle2,
-  Settings2,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { mockTemplates } from "@/lib/mock-data";
@@ -29,7 +28,7 @@ const categoryColors: Record<Template["category"], string> = {
 };
 
 export function MarketplaceView() {
-  const { t, locale } = useI18n();
+  const { t, locale: _locale } = useI18n();
   const [query, setQuery] = React.useState("");
   const [category, setCategory] = React.useState<Template["category"] | "all">("all");
   const [selected, setSelected] = React.useState<Template | null>(null);

@@ -5,18 +5,14 @@ import {
   Plus,
   Search,
   GitBranch,
-  ExternalLink,
   Globe,
   Clock,
-  TrendingUp,
-  Activity,
-  Filter,
   Github,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useRouter } from "@/lib/router";
 import { mockProjects } from "@/lib/mock-data";
-import { StatusBadge, EmptyState, Sparkline } from "@/components/dashboard/shared";
+import { StatusBadge, EmptyState } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { timeAgo, formatDuration } from "@/lib/format";

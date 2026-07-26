@@ -23,7 +23,7 @@ import { mockMetricDefinitions, mockSavedDashboards, generateTimeSeries } from "
 import { SectionHeader } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AreaTimeChart, BarCountChart } from "@/components/charts";
+import { AreaTimeChart } from "@/components/charts";
 import { cn } from "@/lib/utils";
 import type { MetricDefinition } from "@/lib/types";
 

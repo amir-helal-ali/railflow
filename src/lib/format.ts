@@ -15,7 +15,7 @@ export function formatUptime(seconds: number, locale: "ar" | "en" = "en"): strin
   return parts.join(" ") || (locale === "ar" ? "<1د" : "<1m");
 }
 
-export function formatBytes(mb: number, locale: "ar" | "en" = "en"): string {
+export function formatBytes(mb: number, _locale: "ar" | "en" = "en"): string {
   if (mb < 1) return `${(mb * 1024).toFixed(0)} KB`;
   if (mb < 1024) return `${mb.toFixed(0)} MB`;
   if (mb < 1024 * 1024) return `${(mb / 1024).toFixed(2)} GB`;

@@ -4,7 +4,6 @@ import * as React from "react";
 import {
   Search,
   Filter,
-  X,
   Save,
   Download,
   Clock,
@@ -12,7 +11,6 @@ import {
   Bot,
   Webhook,
   Key,
-  ChevronDown,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { mockActivity, mockAuditQueries, mockTeam } from "@/lib/mock-data";

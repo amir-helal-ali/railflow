@@ -4,7 +4,6 @@ import * as React from "react";
 import { Plus, Search, Network as NetworkIcon, Globe, Lock, Shield, Trash2 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { mockNetworks } from "@/lib/mock-data";
-import { SectionHeader, EmptyState } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -19,7 +18,7 @@ const driverColor: Record<string, string> = {
 };
 
 export function NetworksView() {
-  const { t, locale } = useI18n();
+  const { t, locale: _locale } = useI18n();
   const [query, setQuery] = React.useState("");
   const [selected, setSelected] = React.useState<typeof mockNetworks[number] | null>(mockNetworks[0]);
 

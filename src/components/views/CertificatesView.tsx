@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { mockCertificates } from "@/lib/mock-data";
-import { SectionHeader, StatusBadge, ProgressBar } from "@/components/dashboard/shared";
+import { ProgressBar } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/button";
 import { timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -33,7 +33,7 @@ const typeColor: Record<Certificate["type"], string> = {
 };
 
 export function CertificatesView() {
-  const { t, locale } = useI18n();
+  const { t, locale: _locale } = useI18n();
 
   const activeCount = mockCertificates.filter(c => c.status === "active").length;
   const expiringSoon = mockCertificates.filter(c => {

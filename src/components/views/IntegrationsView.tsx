@@ -15,7 +15,6 @@ import { useI18n } from "@/lib/i18n";
 import { mockIntegrations } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import type { Integration } from "@/lib/types";
 
@@ -31,7 +30,7 @@ const categoryColors: Record<Integration["category"], string> = {
 };
 
 export function IntegrationsView() {
-  const { t, locale } = useI18n();
+  const { t, locale: _locale } = useI18n();
   const [query, setQuery] = React.useState("");
   const [filter, setFilter] = React.useState<"all" | "installed" | "available" | Integration["category"]>("all");
   const [integrations, setIntegrations] = React.useState(mockIntegrations);

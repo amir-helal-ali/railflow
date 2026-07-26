@@ -7,7 +7,6 @@ import {
   HardDrive,
   Activity,
   ArrowUpRight,
-  ArrowDownRight,
   Server as ServerIcon,
   Rocket,
   Boxes,
@@ -33,7 +32,7 @@ import {
   mockActivity,
   generateMultiSeries,
 } from "@/lib/mock-data";
-import { MetricCard, StatusBadge, SectionHeader, Sparkline, ProgressBar } from "@/components/dashboard/shared";
+import { MetricCard, StatusBadge, SectionHeader, ProgressBar } from "@/components/dashboard/shared";
 import { AreaTimeChart, BarCountChart, RadialGauge } from "@/components/charts";
 import { formatUptime, timeAgo, useInterval } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -70,7 +69,7 @@ export function DashboardView() {
   // Until client-side series are generated, use empty placeholders
   const cpuSeries = series?.cpu;
   const memSeries = series?.memory;
-  const netSeries = series?.network;
+  const _netSeries = series?.network;
   const deploySeries = series?.deployments;
   const sparkCpu = cpuSeries?.points.map((p) => p.value) ?? [];
   const sparkMem = memSeries?.points.map((p) => p.value) ?? [];
@@ -79,7 +78,7 @@ export function DashboardView() {
   const activeProjects = mockProjects.filter((p) => p.status === "done").length;
   const runningContainers = mockContainers.filter((c) => c.status === "running").length;
   const activeDeployments = mockDeployments.filter((d) => d.status === "building" || d.status === "queued").length;
-  const failedDeploys = mockDeployments.filter((d) => d.status === "failed").length;
+  const _failedDeploys = mockDeployments.filter((d) => d.status === "failed").length;
 
   const hourlyDeploys = React.useMemo(() => {
     return Array.from({ length: 24 }, (_, i) => {

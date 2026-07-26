@@ -18,10 +18,8 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { mockWebhooks, mockWebhookDeliveries } from "@/lib/mock-data";
-import { StatusBadge, SectionHeader } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { WebhookDelivery } from "@/lib/types";

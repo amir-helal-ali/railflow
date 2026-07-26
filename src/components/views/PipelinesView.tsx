@@ -12,8 +12,6 @@ import {
   Loader2,
   ArrowRight,
   Settings2,
-  Copy,
-  Trash2,
   ChevronDown,
   ChevronUp,
   GripVertical,
@@ -27,7 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { timeAgo, formatDuration } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { Pipeline, PipelineStage, PipelineStageType } from "@/lib/types";
+import type { Pipeline, PipelineStageType } from "@/lib/types";
 
 const stageIcon: Record<PipelineStageType, React.ElementType> = {
   trigger: Zap,

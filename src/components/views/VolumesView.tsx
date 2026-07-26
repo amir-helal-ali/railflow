@@ -4,7 +4,7 @@ import * as React from "react";
 import { Plus, Search, HardDrive, Trash2, AlertTriangle, FolderTree } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { mockVolumes } from "@/lib/mock-data";
-import { SectionHeader, EmptyState } from "@/components/dashboard/shared";
+import { EmptyState } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatBytes, timeAgo } from "@/lib/format";
@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 export function VolumesView() {
   const { t, locale } = useI18n();
   const [query, setQuery] = React.useState("");
-  const [showUnusedOnly, setShowUnusedOnly] = React.useState(false);
+  const [showUnusedOnly, _setShowUnusedOnly] = React.useState(false);
 
   const filtered = mockVolumes.filter((v) => {
     if (showUnusedOnly && v.inUse) return false;

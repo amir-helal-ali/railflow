@@ -6,19 +6,16 @@ import {
   Zap,
   Plus,
   Trash2,
-  Server as ServerIcon,
   Cpu,
   MemoryStick,
   HardDrive,
-  Shield,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useRouter } from "@/lib/router";
 import { mockRegions, mockProjects, mockEdgeConfigs } from "@/lib/mock-data";
-import { SectionHeader, ProgressBar } from "@/components/dashboard/shared";
+import { SectionHeader } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { Region } from "@/lib/types";
 
@@ -29,8 +26,8 @@ const statusConfig: Record<Region["status"], { color: string; label: string }> =
 };
 
 export function RegionsView() {
-  const { t, locale } = useI18n();
-  const { navigate } = useRouter();
+  const { t, locale: _locale } = useI18n();
+  const { navigate: _navigate } = useRouter();
   const [selectedProjectId, setSelectedProjectId] = React.useState(mockProjects[0].id);
   const [edgeConfig, setEdgeConfig] = React.useState(mockEdgeConfigs[0]);
 

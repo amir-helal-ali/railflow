@@ -7,7 +7,6 @@ import {
   Download,
   RotateCcw,
   Trash2,
-  Clock,
   CheckCircle2,
   XCircle,
   Loader2,
@@ -15,7 +14,6 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { mockBackups } from "@/lib/mock-data";
-import { SectionHeader, StatusBadge } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/button";
 import { timeAgo, formatDuration, formatBytes } from "@/lib/format";
 import { cn } from "@/lib/utils";

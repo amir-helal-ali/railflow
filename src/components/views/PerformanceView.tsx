@@ -5,20 +5,15 @@ import {
   Gauge,
   TrendingUp,
   TrendingDown,
-  Zap,
-  Clock,
-  Smartphone,
-  Globe,
   Activity,
   Play,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { mockProjectPerformance } from "@/lib/mock-data";
-import { SectionHeader, Sparkline } from "@/components/dashboard/shared";
+import { SectionHeader } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/button";
 import { LineTimeChart } from "@/components/charts";
 import { cn } from "@/lib/utils";
-import type { ProjectPerformance } from "@/lib/types";
 
 function scoreColor(score: number): string {
   if (score >= 90) return "text-emerald-400";

@@ -14,7 +14,6 @@ import {
   LayoutDashboard,
   FolderGit2,
   Boxes,
-  Rocket,
   Server as ServerIcon,
   Settings as SettingsIcon,
   TerminalSquare,
@@ -66,7 +65,7 @@ export function ShortcutsHelp({
   onOpenChange,
 }: {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange: (_open: boolean) => void;
 }) {
   const { t, dir } = useI18n();
 

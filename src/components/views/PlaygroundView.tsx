@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import {
-  Play,
   Send,
   Copy,
   Search,
@@ -10,7 +9,6 @@ import {
   ChevronRight,
   Clock,
   Code,
-  Terminal,
   CheckCircle2,
   XCircle,
   Loader2,

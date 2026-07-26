@@ -3,25 +3,22 @@
 import * as React from "react";
 import {
   Plus,
-  Database as DatabaseIcon,
   Search,
   Copy,
   Eye,
   EyeOff,
   RotateCcw,
   HardDrive,
-  Activity,
   ShieldCheck,
-  ExternalLink,
   Play,
   Square,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { mockDatabases } from "@/lib/mock-data";
-import { StatusBadge, SectionHeader, ProgressBar } from "@/components/dashboard/shared";
+import { StatusBadge, ProgressBar } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { timeAgo, formatBytes } from "@/lib/format";
+import { timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { DatabaseEngine, ManagedDatabase } from "@/lib/types";
 
@@ -34,7 +31,7 @@ const engineMeta: Record<DatabaseEngine, { color: string; icon: string }> = {
 };
 
 export function DatabasesView() {
-  const { t, locale } = useI18n();
+  const { t, locale: _locale } = useI18n();
   const [query, setQuery] = React.useState("");
   const [selected, setSelected] = React.useState<ManagedDatabase | null>(mockDatabases[0]);
   const [showCreate, setShowCreate] = React.useState(false);

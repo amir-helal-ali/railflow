@@ -188,7 +188,7 @@ export function Onboarding() {
 }
 
 /* ---------- Step 1: Welcome ---------- */
-function StepWelcome({ t }: { t: (k: string) => string }) {
+function StepWelcome({ t }: { t: (_k: string) => string }) {
   const features = [
     { icon: Activity, label: t("onboarding.step1.feature1"), color: "text-emerald-400" },
     { icon: Rocket, label: t("onboarding.step1.feature2"), color: "text-violet-300" },
@@ -224,7 +224,7 @@ function StepWelcome({ t }: { t: (k: string) => string }) {
 }
 
 /* ---------- Step 2: Connect GitHub ---------- */
-function StepConnectGithub({ t }: { t: (k: string) => string }) {
+function StepConnectGithub({ t }: { t: (_k: string) => string }) {
   const [connected, setConnected] = React.useState(false);
   return (
     <div className="text-center">
@@ -273,7 +273,7 @@ function StepConnectGithub({ t }: { t: (k: string) => string }) {
 }
 
 /* ---------- Step 3: Deploy first project ---------- */
-function StepDeploy({ t }: { t: (k: string) => string }) {
+function StepDeploy({ t }: { t: (_k: string) => string }) {
   const [selected, setSelected] = React.useState<string | null>(null);
   return (
     <div className="text-center">
@@ -320,7 +320,7 @@ function StepDeploy({ t }: { t: (k: string) => string }) {
 }
 
 /* ---------- Step 4: Explore features ---------- */
-function StepExplore({ t }: { t: (k: string) => string }) {
+function StepExplore({ t }: { t: (_k: string) => string }) {
   const tips = [
     { icon: Search, text: t("onboarding.step4.tip1"), keys: ["⌘", "K"] },
     { icon: Keyboard, text: t("onboarding.step4.tip2"), keys: ["G", "D"] },

@@ -17,7 +17,6 @@ import {
   Plus,
   Trash2,
   Check,
-  AlertCircle,
   QrCode,
   RotateCcw,
   Sparkles,
@@ -394,7 +393,7 @@ function IntegrationsTab() {
 }
 
 function BillingTab() {
-  const { t } = useI18n();
+  const { t: _t } = useI18n();
   return (
     <div className="space-y-4">
       <div className="glass-card p-5">

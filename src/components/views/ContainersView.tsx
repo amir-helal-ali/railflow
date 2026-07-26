@@ -7,15 +7,6 @@ import {
   RotateCcw,
   Terminal,
   Search,
-  Activity,
-  Cpu,
-  MemoryStick,
-  Network as NetworkIcon,
-  HardDrive,
-  Filter,
-  MoreVertical,
-  Copy,
-  Trash2,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useRouter } from "@/lib/router";
@@ -25,7 +16,7 @@ import { StatusBadge, SectionHeader } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { timeAgo, formatUptime, formatBytes, useInterval } from "@/lib/format";
+import { formatUptime, formatBytes, useInterval } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export function ContainersView() {

@@ -6,15 +6,13 @@ import {
   MemoryStick,
   HardDrive,
   Network as NetworkIcon,
-  Server as ServerIcon,
   Activity,
-  Clock,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { mockServerInfo, mockProcesses, generateMultiSeries } from "@/lib/mock-data";
 import { SectionHeader, ProgressBar } from "@/components/dashboard/shared";
 import { AreaTimeChart, RadialGauge } from "@/components/charts";
-import { formatUptime, formatBytes, formatMbps, useInterval } from "@/lib/format";
+import { formatUptime, formatMbps, useInterval } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export function ServerView() {
