@@ -13,13 +13,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Cache dependencies
-COPY Cargo.toml Cargo.lock ./
+# Cache dependencies — generate Cargo.lock if missing
+COPY Cargo.toml ./
 COPY src ./src
 COPY migrations ./migrations
 
-# Build with release optimizations
-RUN cargo build --release
+# Generate Cargo.lock then build
+RUN cargo generate-lockfile && cargo build --release
 
 # Strip & split
 RUN strip target/release/railflow-backend
