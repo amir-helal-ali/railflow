@@ -35,10 +35,10 @@ async fn list_volumes(
         "name": v.name,
         "driver": v.driver,
         "mountpoint": v.mountpoint,
-        "scope": v.scope,
-        "labels": v.labels.unwrap_or_default(),
-        "created_at": v.created_at,
-        "size": v.usage_data.and_then(|u| u.size),
+        "scope": v.scope.map(|s| s.to_string()),
+        "labels": v.labels,
+        "created_at": v.created_at.map(|d| d.to_string()),
+        "size": v.usage_data.map(|u| u.size),
     })).collect();
 
     Ok(json!({ "volumes": result }).into())
@@ -76,7 +76,7 @@ async fn prune_volumes(
     State(state): State<SharedState>,
     _user: AuthUser,
 ) -> Result<Json<serde_json::Value>, AppError> {
-    let result = state.docker.client().prune_volumes(None).await
+    let result = state.docker.client().prune_volumes::<String>(None).await
         .map_err(|e| AppError::Docker(e.to_string()))?;
     Ok(json!({
         "deleted": result.volumes_deleted,
@@ -88,7 +88,7 @@ async fn list_networks(
     State(state): State<SharedState>,
     _user: AuthUser,
 ) -> Result<Json<serde_json::Value>, AppError> {
-    let networks = state.docker.client().list_networks(None).await
+    let networks = state.docker.client().list_networks::<String>(None).await
         .map_err(|e| AppError::Docker(e.to_string()))?;
 
     let result: Vec<_> = networks.into_iter().map(|n| json!({
@@ -112,7 +112,7 @@ async fn get_network(
     _user: AuthUser,
     Path(id): Path<String>,
 ) -> Result<Json<serde_json::Value>, AppError> {
-    let network = state.docker.client().inspect_network(&id, None).await
+    let network = state.docker.client().inspect_network::<String>(&id, None).await
         .map_err(|e| AppError::Docker(e.to_string()))?;
     Ok(Json(json!(network)))
 }

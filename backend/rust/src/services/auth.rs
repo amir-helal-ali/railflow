@@ -83,7 +83,7 @@ impl AuthService {
 
     /// Generate a new TOTP secret for a user (base32-encoded).
     pub fn generate_totp_secret(&self) -> String {
-        Secret::generate_secret().to_string()
+        Secret::generate_secret().to_encoded().to_string()
     }
 
     /// Build a TOTP instance from a secret.
@@ -98,7 +98,7 @@ impl AuthService {
             1,
             30,
             secret_bytes,
-            self.totp_issuer.clone(),
+            Some(self.totp_issuer.clone()),
             account_name.to_string(),
         )
         .map_err(|e| AppError::Internal(format!("TOTP build error: {e}")))

@@ -3,7 +3,7 @@
 // so we convert each row to a serde_json::Value.
 
 use sqlx::postgres::PgRow;
-use sqlx::Row;
+use sqlx::{Column, Row, TypeInfo};
 use serde_json::{json, Map, Value};
 
 /// Convert a single PgRow to a serde_json::Value object.

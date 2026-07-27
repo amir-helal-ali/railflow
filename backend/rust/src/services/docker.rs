@@ -134,7 +134,7 @@ impl DockerService {
 
     /// Start a container.
     pub async fn start_container(&self, id: &str) -> Result<(), AppError> {
-        self.client.start_container(id, None).await
+        self.client.start_container::<String>(id, None).await
             .map_err(|e| AppError::Docker(format!("Failed to start container: {e}")))?;
         Ok(())
     }
@@ -142,7 +142,7 @@ impl DockerService {
     /// Stop a container (graceful with timeout).
     pub async fn stop_container(&self, id: &str, timeout_secs: i32) -> Result<(), AppError> {
         self.client
-            .stop_container(id, Some(StopContainerOptions { t: timeout_secs }))
+            .stop_container(id, Some(StopContainerOptions { t: timeout_secs as i64 }))
             .await
             .map_err(|e| AppError::Docker(format!("Failed to stop container: {e}")))?;
         Ok(())
@@ -151,7 +151,7 @@ impl DockerService {
     /// Restart a container.
     pub async fn restart_container(&self, id: &str, timeout_secs: i32) -> Result<(), AppError> {
         self.client
-            .restart_container(id, Some(StopContainerOptions { t: timeout_secs }))
+            .restart_container(id, Some(bollard::container::RestartContainerOptions { t: timeout_secs as isize }))
             .await
             .map_err(|e| AppError::Docker(format!("Failed to restart container: {e}")))?;
         Ok(())
@@ -165,7 +165,7 @@ impl DockerService {
                 Some(bollard::container::RemoveContainerOptions {
                     force,
                     link: false,
-                    volumes: true,
+                    v: true,
                 }),
             )
             .await
@@ -182,7 +182,7 @@ impl DockerService {
         ports: HashMap<u16, u16>,
         labels: HashMap<String, String>,
     ) -> Result<String, AppError> {
-        use bollard::models::Config;
+        use bollard::container::Config;
 
         let mut exposed_ports = HashMap::new();
         let mut port_bindings = HashMap::new();
@@ -223,7 +223,7 @@ impl DockerService {
         ).await
             .map_err(|e| AppError::Docker(format!("Failed to create container: {e}")))?;
 
-        self.client.start_container(&created.id, None).await
+        self.client.start_container::<String>(&created.id, None).await
             .map_err(|e| AppError::Docker(format!("Failed to start container: {e}")))?;
 
         Ok(created.id)
@@ -271,7 +271,7 @@ impl DockerService {
                     .unwrap_or_default();
                 let parsed = DockerEvent {
                     id: uuid::Uuid::new_v4().to_string(),
-                    r#type: event.typ.unwrap_or_default(),
+                    r#type: event.typ.map(|t| t.to_string()).unwrap_or_default(),
                     action: action_str.clone(),
                     actor_id: event.actor.and_then(|a| a.id).unwrap_or_default(),
                     time: chrono::DateTime::from_timestamp(event.time.unwrap_or(0), 0)
@@ -342,18 +342,18 @@ impl DockerService {
             ports: c.ports.unwrap_or_default().into_iter().filter_map(|p| {
                 Some(PortMapping {
                     host: p.public_port,
-                    container: p.private_port?,
-                    protocol: p.typ.unwrap_or_default(),
+                    container: p.private_port,
+                    protocol: p.typ.map(|t| t.to_string()).unwrap_or_default(),
                 })
             }).collect(),
-            labels: c.labels.unwrap_or_else(HashMap::new),
+            labels: c.labels.unwrap_or_default(),
         })
     }
 }
 
 fn parse_stats(stats: &bollard::container::Stats) -> ContainerStats {
-    let cpu_delta = (stats.cpu_stats.cpu_usage.total_usage.unwrap_or(0) as f64)
-        - (stats.precpu_stats.cpu_usage.total_usage.unwrap_or(0) as f64);
+    let cpu_delta = stats.cpu_stats.cpu_usage.total_usage as f64
+        - stats.precpu_stats.cpu_usage.total_usage as f64;
     let system_delta = (stats.cpu_stats.system_cpu_usage.unwrap_or(0) as f64)
         - (stats.precpu_stats.system_cpu_usage.unwrap_or(0) as f64);
     let cpu_percent = if system_delta > 0.0 && cpu_delta > 0.0 {
@@ -363,11 +363,12 @@ fn parse_stats(stats: &bollard::container::Stats) -> ContainerStats {
         0.0
     };
 
-    let memory_used = stats.memory_stats.usage.unwrap_or(0) as f64
-        - stats.memory_stats.stats.as_ref()
-            .and_then(|s| s.get("cache"))
-            .and_then(|c| c.as_u64())
-            .unwrap_or(0) as f64;
+    // Memory stats: cache field is in V1 cgroups (MemoryStatsStats::V1.cache) or absent in V2.
+    let cache = stats.memory_stats.stats.as_ref().map(|s| match s {
+        bollard::container::MemoryStatsStats::V1(v1) => v1.cache,
+        bollard::container::MemoryStatsStats::V2(_) => 0,
+    }).unwrap_or(0);
+    let memory_used = stats.memory_stats.usage.unwrap_or(0) as f64 - cache as f64;
     let memory_limit = stats.memory_stats.limit.unwrap_or(0) as f64;
 
     let (net_in, net_out) = stats
@@ -375,7 +376,7 @@ fn parse_stats(stats: &bollard::container::Stats) -> ContainerStats {
         .as_ref()
         .map(|n| {
             n.values().fold((0u64, 0u64), |(i, o), v| {
-                (i + v.rx_bytes.unwrap_or(0), o + v.tx_bytes.unwrap_or(0))
+                (i + v.rx_bytes, o + v.tx_bytes)
             })
         })
         .unwrap_or((0, 0));
@@ -386,9 +387,9 @@ fn parse_stats(stats: &bollard::container::Stats) -> ContainerStats {
         .as_ref()
         .map(|v| {
             v.iter().fold((0u64, 0u64), |(r, w), b| {
-                match b.op.as_deref() {
-                    Some("read") => (r + b.value.unwrap_or(0), w),
-                    Some("write") => (r, w + b.value.unwrap_or(0)),
+                match b.op.as_str() {
+                    "read" => (r + b.value, w),
+                    "write" => (r, w + b.value),
                     _ => (r, w),
                 }
             })

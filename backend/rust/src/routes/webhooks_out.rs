@@ -168,7 +168,7 @@ async fn test_webhook(
         }
     });
 
-    Ok(json!({ "sent": rows_to_json(&true) }).into())
+    Ok(json!({ "sent": true }).into())
 }
 
 async fn list_deliveries(

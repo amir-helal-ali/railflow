@@ -90,9 +90,9 @@ async fn create_project(
     .await?;
 
     // Register GitHub webhook if we have a token
-    if let Some(token) = &user.role.as_str() {
+    {
         // TODO: store user.github_token from auth flow
-        let _ = token;
+        let _ = &user.role;
     }
 
     Ok(Json(project.into()))

@@ -133,7 +133,7 @@ impl ServerService {
         let swap_used = sys.used_swap() as f64 / 1024.0 / 1024.0 / 1024.0;
 
         // Disks
-        let disks = Disks::new_with_specifics(RefreshKind::nothing().with_disks_list());
+        let disks = Disks::new_with_refreshed_list();
         let partitions: Vec<PartitionInfo> = disks
             .list()
             .iter()
@@ -179,7 +179,7 @@ impl ServerService {
             cpu: CpuInfo {
                 model: cpus.first().map(|c| c.brand().to_string()).unwrap_or_default(),
                 cores: cpus.len(),
-                physical_cores: System::physical_core_count().unwrap_or(cpus.len()),
+                physical_cores: sys.physical_core_count().unwrap_or(cpus.len()),
                 frequency_mhz: cpus.first().map(|c| c.frequency()).unwrap_or(0),
                 load_avg1: load_avg.one,
                 load_avg5: load_avg.five,
@@ -215,7 +215,9 @@ impl ServerService {
 
     pub fn top_processes(&self, limit: usize) -> Vec<ProcessInfo> {
         let mut sys = System::new_all();
-        sys.refresh_processes();
+        sys.refresh_processes(sysinfo::ProcessesToUpdate::All);
+
+        let users = sysinfo::Users::new_with_refreshed_list();
 
         let mut procs: Vec<_> = sys
             .processes()
@@ -223,8 +225,8 @@ impl ServerService {
             .map(|(pid, p)| ProcessInfo {
                 pid: pid.as_u32(),
                 name: p.name().to_string_lossy().to_string(),
-                user: sysinfo::Users::new_with_refreshed_list()
-                    .get_user_by_id(p.user_id())
+                user: p.user_id()
+                    .and_then(|uid| users.get_user_by_id(uid))
                     .map(|u| u.name().to_string())
                     .unwrap_or_else(|| "—".into()),
                 cpu_percent: p.cpu_usage() as f64,
@@ -232,7 +234,7 @@ impl ServerService {
                 memory_percent: (p.memory() as f64 / sys.total_memory() as f64) * 100.0,
                 status: format!("{:?}", p.status()),
                 start_time: chrono::DateTime::from_timestamp(p.start_time() as i64, 0).unwrap_or_else(|| chrono::Utc::now()),
-                command: p.cmd().join(" "),
+                command: p.cmd().iter().map(|s| s.to_string_lossy().to_string()).collect::<Vec<_>>().join(" "),
             })
             .collect();
 
