@@ -62,6 +62,15 @@ pub struct DockerEvent {
 }
 
 impl DockerService {
+    /// Create a mock service for when Docker is unavailable (demo mode)
+    pub fn new_mock() -> Self {
+        let client = Docker::connect_with_unix_defaults()
+            .unwrap_or_else(|_| Docker::connect_with_http_defaults().unwrap_or_else(|_| {
+                panic!("Cannot create Docker client even in mock mode")
+            }));
+        Self { client }
+    }
+
     pub async fn new(socket: &str) -> Result<Self, AppError> {
         let client = if socket.starts_with("tcp://") || socket.starts_with("http://") {
             Docker::connect_with_http_defaults()?
@@ -69,9 +78,14 @@ impl DockerService {
             Docker::connect_with_unix_defaults()?
         };
 
-        let version = client.version().await.map_err(|e| {
-            AppError::Internal(format!("Failed to connect to Docker daemon: {e}"))
-        })?;
+        // Try to get Docker version with a 3-second timeout
+        let version = tokio::time::timeout(
+            std::time::Duration::from_secs(3),
+            client.version()
+        ).await
+            .map_err(|_| AppError::Internal("Docker connection timed out".into()))?
+            .map_err(|e| AppError::Internal(format!("Failed to connect to Docker daemon: {e}")))?;
+
         tracing::info!("Docker {} connected", version.version.unwrap_or_default());
 
         Ok(Self { client })
