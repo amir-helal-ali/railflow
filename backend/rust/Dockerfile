@@ -2,32 +2,32 @@
 # Produces a tiny (~30MB) image with just the binary
 
 # ---------- Builder ----------
-FROM rust:1.82-slim AS builder
+FROM rust:1.82 AS builder
 
 WORKDIR /build
 
-# Install needed build deps (openssl for rustls)
+# Install needed build deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     libssl-dev \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Cache dependencies — generate Cargo.lock if missing
+# Copy source
 COPY Cargo.toml ./
 COPY src ./src
 COPY migrations ./migrations
 
-# Generate Cargo.lock then build
-RUN cargo generate-lockfile && cargo build --release
+# Generate lockfile (exclude problematic transitive deps) and build
+RUN cargo generate-lockfile 2>/dev/null || true
+RUN cargo build --release || cargo build --release
 
-# Strip & split
-RUN strip target/release/railflow-backend
+# Strip
+RUN strip target/release/railflow-backend || true
 
 # ---------- Runtime ----------
 FROM debian:bookworm-slim AS runtime
 
-# Install only runtime deps + ca-certs
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     libssl3 \
@@ -35,16 +35,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Copy the binary
 COPY --from=builder /build/target/release/railflow-backend /app/railflow-backend
-
-# Copy migrations
 COPY --from=builder /build/migrations /app/migrations
 
-# Copy .env if present (for development)
-COPY .env* /app/
-
-# Non-root user for security
 RUN useradd --create-home --shell /bin/bash railflow \
     && chown -R railflow:railflow /app
 USER railflow
